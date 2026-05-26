@@ -1781,6 +1781,14 @@ if (userManagerModal) {
 if (loadUsersBtn) loadUsersBtn.onclick = loadUsers;
 if (saveUsersBtn) saveUsersBtn.onclick = saveUsers;
 
+// Daily Report button hook
+const dailyReportBtn = document.getElementById('dailyReportBtn');
+if (dailyReportBtn) {
+  dailyReportBtn.onclick = () => {
+    showToast("Daily Report feature coming soon!", "info");
+  };
+}
+
 // Export Data Logic
 const closeExportBtn = document.getElementById('close-export-btn');
 if (closeExportBtn) closeExportBtn.onclick = () => document.getElementById('export-data-modal').classList.remove('active');

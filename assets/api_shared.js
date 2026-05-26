@@ -145,6 +145,19 @@ window.syncApiDisplay = async (elementId, forceReveal = false) => {
 };
 window.apiBridge = async (payload) => await apiCallSync(payload);
 
+function readStoredJsonMaybe(key, fallback = null) {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw === undefined || raw === "") return fallback;
+    try { return JSON.parse(raw); } catch (e) { return raw; }
+}
+
+function getLocalSessionSnapshot() {
+    const session = readStoredJsonMaybe('session', null);
+    const nicknameRaw = readStoredJsonMaybe('nickname', null);
+    const nickname = (typeof nicknameRaw === 'string' ? nicknameRaw : (nicknameRaw || (session && session.nickName) || "User"));
+    return { session, nickname };
+}
+
 function normalizeOkNoAccess(value) { return String(value || "NO").trim().toUpperCase() === "OK" ? "OK" : "NO"; }
 function normalizeSessionAccessShape(access) {
     const raw = access || {};
@@ -178,16 +191,15 @@ function hasModuleAccessInSession(access, platform, module) {
 window.displayUserNickname = (containerId) => {
     const container = document.getElementById(containerId);
     if (!container) return;
+
+    const localSnapshot = getLocalSessionSnapshot();
+    window.renderGlobalBadge(containerId, localSnapshot.nickname || "User", localSnapshot.session || null);
+
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
         chrome.storage.local.get(['nickname', 'session'], (res) => {
-            const nickname = res.nickname || (res.session && res.session.nickName) || localStorage.getItem('nickname') || "User";
+            const nickname = res.nickname || (res.session && res.session.nickName) || localSnapshot.nickname || "User";
             window.renderGlobalBadge(containerId, nickname, res.session || null);
         });
-    } else {
-        const nickname = localStorage.getItem('nickname') || "User";
-        let session = null;
-        try { session = JSON.parse(localStorage.getItem('session')); } catch (e) { }
-        window.renderGlobalBadge(containerId, nickname, session);
     }
 };
 
@@ -236,11 +248,22 @@ window.renderGlobalBadge = (containerId, nickname, sessionData = null) => {
     homeBtn.style.cssText = "background:#475569; border:none; border-radius:10px; width:34px; height:34px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; transition:all 0.2s;";
     homeBtn.onclick = () => { window.location.href = window.resolveLocalPath('gateway/gateway.html'); };
 
+    const dailyReportBtnGlobal = document.createElement('button');
+    dailyReportBtnGlobal.id = "dailyReportBtnGlobal";
+    dailyReportBtnGlobal.title = "Daily Work Report";
+    dailyReportBtnGlobal.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+    dailyReportBtnGlobal.style.cssText = "background:#d97706; border:none; border-radius:10px; width:34px; height:34px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; transition:all 0.2s; margin-right:4px;";
+    dailyReportBtnGlobal.onclick = () => {
+        if (typeof window.openDailyReportModalGlobal === 'function') {
+            window.openDailyReportModalGlobal();
+        }
+    };
+
     let actionHost = document.getElementById('globalActionHost');
     if (!actionHost) { actionHost = document.createElement('div'); actionHost.id = 'globalActionHost'; }
     actionHost.style.cssText = "display:none; align-items:center; gap:8px;";
 
-    topRow.append(actionHost, wrapper, homeBtn, logoutBtn);
+    topRow.append(actionHost, wrapper, dailyReportBtnGlobal, homeBtn, logoutBtn);
 
     const bottomRow = document.createElement('div');
     bottomRow.style.cssText = "display:flex; gap:8px; align-items:center;";
@@ -331,6 +354,24 @@ window.mountGlobalActionButton = (buttonId, statusId, isVisible) => {
         status.style.opacity = isVisible ? status.style.opacity || '0' : '0';
     }
 };
+
+window.ensureGlobalHeaderBadge = (containerId = 'userNicknameContainer') => {
+    const container = document.getElementById(containerId);
+    if (!container) return false;
+    if (!container.children.length || !container.querySelector('#userBadgeWrapper')) {
+        window.displayUserNickname(containerId);
+    }
+    return true;
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => window.ensureGlobalHeaderBadge('userNicknameContainer'), 0);
+});
+
+window.addEventListener('load', () => {
+    setTimeout(() => window.ensureGlobalHeaderBadge('userNicknameContainer'), 60);
+    setTimeout(() => window.ensureGlobalHeaderBadge('userNicknameContainer'), 300);
+});
 
 window.normalizeMojibake = (s) => {
     if (!s) return s;
@@ -1256,3 +1297,591 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
     });
 }
 
+// --- GLOBAL DAILY WORK REPORT SYSTEM ---
+window.getTodayActivityStatsGlobal = async () => {
+    const stats = {
+        ajio: { sales: 0, purchases: 0, cn: 0, dn: 0 },
+        amazon: { sales: 0, purchases: 0, cn: 0, dn: 0 },
+        myntra: { sales: 0, purchases: 0, cn: 0, dn: 0 }
+    };
+
+    const getStoredNicknameLocal = () => {
+        return new Promise((resolve) => {
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.get(['nickname', 'session'], (res) => {
+                    const nick = res.nickname || (res.session && res.session.nickName) || localStorage.getItem('nickname') || "User";
+                    resolve(nick.toString().trim());
+                });
+            } else {
+                resolve((localStorage.getItem('nickname') || "User").toString().trim());
+            }
+        });
+    };
+
+    const getStorageDataLocal = (key) => {
+        return new Promise((resolve) => {
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.get([key], (res) => {
+                    resolve(res[key] || []);
+                });
+            } else {
+                const val = localStorage.getItem(key);
+                try {
+                    resolve(val ? JSON.parse(val) : []);
+                } catch {
+                    resolve([]);
+                }
+            }
+        });
+    };
+
+    const nickname = (await getStoredNicknameLocal()).toUpperCase();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartMs = todayStart.getTime();
+
+    try {
+        const pushHistory = await getStorageDataLocal('pushHistory');
+        pushHistory.forEach(item => {
+            if (item.timestamp >= todayStartMs && item.uploader && item.uploader.toUpperCase().trim() === nickname) {
+                const platform = item.platform.toLowerCase();
+                if (stats[platform]) {
+                    stats[platform].sales++;
+                }
+            }
+        });
+
+        const uploadHistory = await getStorageDataLocal('fileUploadHistory');
+        uploadHistory.forEach(item => {
+            if (item.timestamp >= todayStartMs && item.uploader && item.uploader.toUpperCase().trim() === nickname) {
+                const platform = item.platform.toLowerCase();
+                if (stats[platform]) {
+                    const action = (item.actionName || '').toLowerCase();
+                    const count = parseInt(item.inserted) || 0;
+                    if (count > 0) {
+                        if (action.includes('sale') || action.includes('sales')) {
+                            stats[platform].sales += count;
+                        } else if (action.includes('purchase') || action.includes('bill')) {
+                            stats[platform].purchases += count;
+                        } else if (action.includes('credit')) {
+                            stats[platform].cn += count;
+                        } else if (action.includes('debit')) {
+                            stats[platform].dn += count;
+                        } else if (action.includes('portal process')) {
+                            stats[platform].sales += count;
+                        } else if (action.includes('vendor process')) {
+                            stats[platform].purchases += count;
+                        }
+                    }
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Error reading stats globally:", err);
+    }
+
+    return stats;
+};
+
+window.initializeDailyReportGlobal = () => {
+    if (document.getElementById('daily-report-modal')) return;
+
+    // Inject CSS
+    const css = `
+    .report-modal-large {
+      max-width: 820px !important;
+      width: 820px !important;
+      border-radius: 24px;
+    }
+    .report-stat-form-card {
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .report-stat-form-card:hover {
+      border-color: #94a3b8 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .report-stat-form-card label {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .other-work-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .other-work-row input {
+      flex: 1;
+    }
+    .btn-delete-task {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-delete-task:hover {
+      background: rgba(239, 68, 68, 0.2);
+      transform: scale(1.05);
+    }
+    `;
+    const style = document.createElement('style');
+    style.innerHTML = css;
+    document.head.appendChild(style);
+
+    // Inject HTML Markup
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <!-- Daily Work Report Modal -->
+      <div id="daily-report-modal" class="modal-overlay">
+        <div class="access-modal report-modal-large" style="text-align: left; padding: 32px; max-height: 92vh; overflow-y: auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; background: #fffbeb; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📅</div>
+              <div>
+                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a;">Daily Work Report</h2>
+                <p style="margin: 2px 0 0; font-size: 0.85rem; color: #64748b;">Verify stats & add other tasks before downloading</p>
+              </div>
+            </div>
+            <button id="close-daily-report-btn" style="background:none; border:none; font-size: 24px; color: #94a3b8; cursor: pointer;">&times;</button>
+          </div>
+
+          <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+            <div class="input-group" style="flex: 1; text-align: left;">
+              <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Operator Name</label>
+              <input type="text" id="report-user-name" class="insights-select" style="width: 100%; margin-top: 5px; height: 42px; font-weight: 600;">
+            </div>
+            <div class="input-group" style="flex: 1; text-align: left;">
+              <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Date & Time</label>
+              <input type="text" id="report-datetime" class="insights-select" style="width: 100%; margin-top: 5px; height: 42px; background-color: #f1f5f9; cursor: not-allowed;" readonly>
+            </div>
+          </div>
+
+          <!-- Stats Grid Form -->
+          <h3 style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px;">Activity Statistics</h3>
+          <div style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <!-- AJIO Stats -->
+            <div class="report-stat-form-card" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+              <h4 style="margin: 0 0 8px 0; font-size: 11px; color: #3b82f6; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">AJIO</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Invoices</label>
+                  <input type="number" id="input-ajio-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Bills</label>
+                  <input type="number" id="input-ajio-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+                  <input type="number" id="input-ajio-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+                  <input type="number" id="input-ajio-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- AMAZON Stats -->
+            <div class="report-stat-form-card" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+              <h4 style="margin: 0 0 8px 0; font-size: 11px; color: #10b981; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">AMAZON</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Invoices</label>
+                  <input type="number" id="input-amazon-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Bills</label>
+                  <input type="number" id="input-amazon-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+                  <input type="number" id="input-amazon-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+                  <input type="number" id="input-amazon-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- MYNTRA Stats -->
+            <div class="report-stat-form-card" style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+              <h4 style="margin: 0 0 8px 0; font-size: 11px; color: #f43f5e; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">MYNTRA</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Invoices</label>
+                  <input type="number" id="input-myntra-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Bills</label>
+                  <input type="number" id="input-myntra-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+                  <input type="number" id="input-myntra-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+                  <input type="number" id="input-myntra-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Work Dynamic Form -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px;">
+            <h3 style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase; margin: 0;">Other Work</h3>
+            <button id="add-other-work-btn" class="btn-outline" style="padding: 4px 10px; font-size: 11px; background: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; border-color: rgba(16, 185, 129, 0.3) !important;">+ Add Task</button>
+          </div>
+          <div id="other-work-inputs-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Dynamic task inputs will go here -->
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button id="cancel-daily-report-btn" class="btn-outline" style="flex: 1; padding: 12px;">Cancel</button>
+            <button id="generate-report-img-btn" class="btn-main" style="flex: 2; padding: 12px; background: #d97706; border-color: #d97706;">Download Report Image 📥</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden Report Card Template for Screenshot -->
+      <div id="report-screenshot-template" style="position: absolute; left: -9999px; top: 0; width: 650px; background: #ffffff; padding: 30px; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif;">
+        
+        <!-- Logo Header Block -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid #0f172a; padding-bottom: 16px;">
+          <img id="template-brand-logo" style="width: 54px; height: 54px; object-fit: contain;">
+          <div>
+            <div style="font-size: 28px; font-weight: 850; color: #1e293b; letter-spacing: -0.5px; line-height: 1.1;">Brand Central</div>
+            <div style="font-size: 13px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px;">Ecommerce Growth Accelerator</div>
+          </div>
+        </div>
+
+        <!-- Title Block -->
+        <div style="text-align: center; margin-bottom: 20px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px; font-size: 18px; font-weight: 800; color: #1e293b; letter-spacing: 1px; text-transform: uppercase;">
+          DAILY WORK REPORT
+        </div>
+
+        <!-- Metadata Block -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr>
+            <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; width: 120px; background: #f8fafc;">Name:</td>
+            <td id="template-user-name" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; background: #f8fafc;">Date & Time:</td>
+            <td id="template-datetime" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+          </tr>
+        </table>
+
+        <!-- Main Stats Table -->
+        <table id="template-stats-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+          <thead>
+            <tr style="background: #dbeafe; font-weight: bold; text-align: left; color: #1e3a8a;">
+              <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 75%;">Activity / Work Item</th>
+              <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 25%; text-align: center;">Count</th>
+            </tr>
+          </thead>
+          <tbody id="template-stats-tbody">
+          </tbody>
+        </table>
+
+        <!-- Other Work Section -->
+        <div id="template-other-work-section" style="margin-top: 20px; display: none;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #e2e8f0; font-weight: bold; text-align: left; color: #334155;">
+                <th style="border: 1.5px solid #94a3b8; padding: 8px 12px;">OTHER WORK</th>
+              </tr>
+            </thead>
+            <tbody id="template-other-work-tbody">
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    const logoImg = document.getElementById('template-brand-logo');
+    if (logoImg) logoImg.src = window.resolveLocalPath('logo.png');
+
+    // Bind event listeners
+    document.getElementById('close-daily-report-btn').onclick = window.closeDailyReportModalGlobal;
+    document.getElementById('cancel-daily-report-btn').onclick = window.closeDailyReportModalGlobal;
+    document.getElementById('add-other-work-btn').onclick = () => window.addOtherWorkRowGlobal();
+    document.getElementById('generate-report-img-btn').onclick = window.downloadReportImageGlobal;
+    
+    const dailyReportModal = document.getElementById('daily-report-modal');
+    if (dailyReportModal) {
+      dailyReportModal.onclick = (e) => {
+        if (e.target && e.target.id === 'daily-report-modal') window.closeDailyReportModalGlobal();
+      };
+    }
+};
+
+window.openDailyReportModalGlobal = async () => {
+    window.initializeDailyReportGlobal();
+
+    const modal = document.getElementById('daily-report-modal');
+    if (!modal) return;
+
+    const nameInput = document.getElementById('report-user-name');
+    const datetimeInput = document.getElementById('report-datetime');
+
+    let nickname = "User";
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        const res = await new Promise(r => chrome.storage.local.get(['nickname'], r));
+        nickname = res.nickname || localStorage.getItem('nickname') || "User";
+    } else {
+        nickname = localStorage.getItem('nickname') || "User";
+    }
+    nameInput.value = nickname.toUpperCase();
+
+    const now = new Date();
+    // Helper to format date
+    const pad = (n) => String(n).padStart(2, '0');
+    const formatTimeCustomLocal = (t) => {
+        const d = new Date(t);
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    datetimeInput.value = formatTimeCustomLocal(now.getTime());
+
+    // Fetch today's stats and populate form
+    const stats = await window.getTodayActivityStatsGlobal();
+
+    document.getElementById('input-ajio-sales').value = stats.ajio.sales;
+    document.getElementById('input-ajio-purchases').value = stats.ajio.purchases;
+    document.getElementById('input-ajio-cn').value = stats.ajio.cn;
+    document.getElementById('input-ajio-dn').value = stats.ajio.dn;
+
+    document.getElementById('input-amazon-sales').value = stats.amazon.sales;
+    document.getElementById('input-amazon-purchases').value = stats.amazon.purchases;
+    document.getElementById('input-amazon-cn').value = stats.amazon.cn;
+    document.getElementById('input-amazon-dn').value = stats.amazon.dn;
+
+    document.getElementById('input-myntra-sales').value = stats.myntra.sales;
+    document.getElementById('input-myntra-purchases').value = stats.myntra.purchases;
+    document.getElementById('input-myntra-cn').value = stats.myntra.cn;
+    document.getElementById('input-myntra-dn').value = stats.myntra.dn;
+
+    // Clear other work inputs
+    const container = document.getElementById('other-work-inputs-container');
+    if (container) {
+        container.innerHTML = '';
+        window.addOtherWorkRowGlobal();
+    }
+
+    modal.classList.add('active');
+};
+
+window.closeDailyReportModalGlobal = () => {
+    const modal = document.getElementById('daily-report-modal');
+    if (modal) modal.classList.remove('active');
+};
+
+window.addOtherWorkRowGlobal = (text = '') => {
+    const container = document.getElementById('other-work-inputs-container');
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'other-work-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'insights-select';
+    input.placeholder = 'Enter details of other work...';
+    input.value = text;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn-delete-task';
+    deleteBtn.innerHTML = '&times;';
+    deleteBtn.title = 'Delete task';
+    deleteBtn.onclick = () => row.remove();
+
+    row.appendChild(input);
+    row.appendChild(deleteBtn);
+    container.appendChild(row);
+};
+
+window.downloadReportImageGlobal = async () => {
+    const downloadBtn = document.getElementById('generate-report-img-btn');
+    if (!downloadBtn) return;
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = 'Generating Image... ⏳';
+
+    const getHtml2canvas = () => {
+        return new Promise((resolve, reject) => {
+            if (window.html2canvas) {
+                resolve(window.html2canvas);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = window.resolveLocalPath('assets/lib/html2canvas.min.js');
+            script.onload = () => resolve(window.html2canvas);
+            script.onerror = (e) => reject(e);
+            document.head.appendChild(script);
+        });
+    };
+
+    try {
+        const userName = document.getElementById('report-user-name').value.trim() || 'User';
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const formatTimeCustomLocal = (t) => {
+            const d = new Date(t);
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        };
+        const datetimeStr = formatTimeCustomLocal(now.getTime());
+
+        // Update metadata in template
+        document.getElementById('template-user-name').innerText = userName;
+        document.getElementById('template-datetime').innerText = datetimeStr;
+
+        // Compile Stats Table Rows
+        const tbody = document.getElementById('template-stats-tbody');
+        tbody.innerHTML = '';
+
+        const platforms = ['AJIO', 'AMAZON', 'MYNTRA'];
+        const metrics = [
+            { key: 'sales', label: 'INVOICE CREATE', color: '#3b82f6', border: '5px solid #3b82f6' },
+            { key: 'purchases', label: 'BILL CREATE', color: '#10b981', border: '5px solid #10b981' },
+            { key: 'cn', label: 'CREDIT NOTE CREATE', color: '#ef4444', border: '5px solid #ef4444' },
+            { key: 'dn', label: 'DEBIT NOTE CREATE', color: '#ef4444', border: '5px solid #ef4444' }
+        ];
+
+        let rowCount = 0;
+
+        platforms.forEach(p => {
+            metrics.forEach(m => {
+                const inputId = `input-${p.toLowerCase()}-${m.key}`;
+                const inputVal = parseInt(document.getElementById(inputId).value) || 0;
+
+                if (inputVal > 0) {
+                    rowCount++;
+                    const tr = document.createElement('tr');
+
+                    const tdLabel = document.createElement('td');
+                    tdLabel.style.border = '1px solid #cbd5e1';
+                    tdLabel.style.borderLeft = m.border;
+                    tdLabel.style.padding = '8px 12px';
+                    tdLabel.style.fontWeight = '600';
+                    tdLabel.style.color = '#334155';
+                    tdLabel.innerText = `${p} ${m.label}:`;
+
+                    const tdVal = document.createElement('td');
+                    tdVal.style.border = '1px solid #cbd5e1';
+                    tdVal.style.padding = '8px 12px';
+                    tdVal.style.textAlign = 'center';
+                    tdVal.style.fontWeight = 'bold';
+                    tdVal.style.color = m.color;
+                    tdVal.style.fontSize = '14px';
+                    tdVal.innerText = inputVal;
+
+                    tr.appendChild(tdLabel);
+                    tr.appendChild(tdVal);
+                    tbody.appendChild(tr);
+                }
+            });
+        });
+
+        if (rowCount === 0) {
+            const tr = document.createElement('tr');
+            const tdLabel = document.createElement('td');
+            tdLabel.style.border = '1px solid #cbd5e1';
+            tdLabel.style.padding = '12px';
+            tdLabel.style.textAlign = 'center';
+            tdLabel.style.color = '#64748b';
+            tdLabel.style.fontStyle = 'italic';
+            tdLabel.colSpan = 2;
+            tdLabel.innerText = 'No core platform tasks processed today.';
+            tr.appendChild(tdLabel);
+            tbody.appendChild(tr);
+        }
+
+        // Compile Other Work Rows
+        const otherWorkTbody = document.getElementById('template-other-work-tbody');
+        const otherWorkSection = document.getElementById('template-other-work-section');
+        otherWorkTbody.innerHTML = '';
+
+        const otherInputs = document.querySelectorAll('.other-work-row input');
+        let otherCount = 0;
+
+        otherInputs.forEach(input => {
+            const val = input.value.trim();
+            if (val) {
+                otherCount++;
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.style.border = '1px solid #cbd5e1';
+                td.style.borderLeft = '5px solid #10b981';
+                td.style.padding = '8px 12px';
+                td.style.color = '#334155';
+                td.innerText = val;
+                tr.appendChild(td);
+                otherWorkTbody.appendChild(tr);
+            }
+        });
+
+        if (otherCount > 0) {
+            otherWorkSection.style.display = 'block';
+        } else {
+            otherWorkSection.style.display = 'none';
+        }
+
+        // Ensure html2canvas is loaded
+        const h2c = await getHtml2canvas();
+
+        // Render screenshot
+        setTimeout(async () => {
+            try {
+                const element = document.getElementById('report-screenshot-template');
+                const canvas = await h2c(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+
+                const a = document.createElement('a');
+                const dateStr = now.toISOString().split('T')[0];
+                a.download = `Daily_Work_Report_${userName.replace(/\s+/g, '_')}_${dateStr}.png`;
+                a.href = imgData;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // Try to use toast system or simple alert
+                const showToastMsg = (msg, type) => {
+                    if (window.showToast) window.showToast(msg, type);
+                    else if (typeof showToast === 'function') showToast(msg, type);
+                    else alert(msg);
+                };
+                showToastMsg("Report image downloaded successfully!", "success");
+                window.closeDailyReportModalGlobal();
+            } catch (err) {
+                console.error("Screenshot capture failed:", err);
+                alert("Failed to generate report image.");
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = 'Download Report Image 📥';
+            }
+        }, 150);
+
+    } catch (e) {
+        console.error("Error generating report:", e);
+        alert("Error processing report data.");
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = 'Download Report Image 📥';
+    }
+};

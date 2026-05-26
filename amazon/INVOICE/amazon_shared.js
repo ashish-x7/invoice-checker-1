@@ -287,11 +287,28 @@ function renderUserInsights(payload) {
     const leaderboardCont = document.getElementById('userLeaderboardContent');
     const platformStatsCont = document.getElementById('userPlatformWorkload');
     const chartCanvas = document.getElementById('userProductivityChart');
+    const teamAvgKPI = document.getElementById('teamAverageKPI');
+    const teamIntKPI = document.getElementById('teamIntegrityKPI');
+    const activeUsersKPI = document.getElementById('activeUsersKPI');
+    const platformPieCanvas = document.getElementById('userPlatformPieChart');
 
     if (!userStats || userStats.length === 0) {
         if (leaderboardCont) leaderboardCont.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8; font-weight:700;">No user data found in the sync records.</div>';
+        if (platformStatsCont) platformStatsCont.innerHTML = "";
+        if (teamAvgKPI) teamAvgKPI.textContent = "0";
+        if (teamIntKPI) teamIntKPI.textContent = "0%";
+        if (activeUsersKPI) activeUsersKPI.textContent = "0";
         return;
     }
+
+    const totalInvoices = userStats.reduce((sum, u) => sum + (u.totalRows || 0), 0);
+    const totalDisputes = userStats.reduce((sum, u) => sum + (u.disputeRows || 0), 0);
+    const avgRows = Math.round(totalInvoices / userStats.length);
+    const dataIntegrity = totalInvoices > 0 ? (((totalInvoices - totalDisputes) / totalInvoices) * 100).toFixed(1) : "0.0";
+
+    if (teamAvgKPI) teamAvgKPI.textContent = avgRows.toLocaleString();
+    if (teamIntKPI) teamIntKPI.textContent = `${dataIntegrity}%`;
+    if (activeUsersKPI) activeUsersKPI.textContent = userStats.length;
 
     // 1. Draw Grouped Bar Chart (Top 7 Users)
     if (window.InsightsCharts && chartCanvas) {
@@ -346,6 +363,7 @@ function renderUserInsights(payload) {
     // 3. Render Platform Distribution Stats
     if (platformStatsCont) {
         platformStatsCont.innerHTML = userStats.sort((a,b) => b.totalRows - a.totalRows).slice(0, 5).map(u => {
+            const total = u.totalRows || 1;
             return `
                 <div style="background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #f1f5f9;">
                     <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; margin-bottom: 8px; color: #1e293b;">
@@ -353,9 +371,9 @@ function renderUserInsights(payload) {
                         <span style="color: #6366f1;">${u.totalRows} Total</span>
                     </div>
                     <div style="display: flex; gap: 4px; height: 6px; border-radius: 10px; overflow: hidden; background: #e2e8f0;">
-                        <div style="width: ${(u.amazon / u.totalRows * 100) || 0}%; background: #ff9900; transition: width 0.5s ease;"></div>
-                        <div style="width: ${(u.ajio / u.totalRows * 100) || 0}%; background: #1e293b; transition: width 0.5s ease;"></div>
-                        <div style="width: ${(u.myntra / u.totalRows * 100) || 0}%; background: #ff3f6c; transition: width 0.5s ease;"></div>
+                        <div style="width: ${(u.amazon / total * 100) || 0}%; background: #ff9900; transition: width 0.5s ease;"></div>
+                        <div style="width: ${(u.ajio / total * 100) || 0}%; background: #1e293b; transition: width 0.5s ease;"></div>
+                        <div style="width: ${(u.myntra / total * 100) || 0}%; background: #ff3f6c; transition: width 0.5s ease;"></div>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 6px; font-weight: 700; color: #64748b;">
                         <span>Amazon: ${u.amazon}</span>
@@ -365,6 +383,19 @@ function renderUserInsights(payload) {
                 </div>
             `;
         }).join('');
+    }
+
+    if (window.InsightsCharts && platformPieCanvas) {
+        const teamAmazon = userStats.reduce((sum, u) => sum + (u.amazon || 0), 0);
+        const teamAjio = userStats.reduce((sum, u) => sum + (u.ajio || 0), 0);
+        const teamMyntra = userStats.reduce((sum, u) => sum + (u.myntra || 0), 0);
+        window.InsightsCharts.drawDonutChart(platformPieCanvas, [
+            { label: 'Amazon', value: teamAmazon },
+            { label: 'Ajio', value: teamAjio },
+            { label: 'Myntra', value: teamMyntra }
+        ], {
+            colors: ['#ff9900', '#1e293b', '#ff3f6c']
+        });
     }
 }
 

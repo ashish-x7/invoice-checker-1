@@ -217,11 +217,28 @@ function renderUserInsights(payload) {
   const leaderboardCont = document.getElementById('userLeaderboardContent');
   const platformStatsCont = document.getElementById('userPlatformWorkload');
   const chartCanvas = document.getElementById('userProductivityChart');
+  const teamAvgKPI = document.getElementById('teamAverageKPI');
+  const teamIntKPI = document.getElementById('teamIntegrityKPI');
+  const activeUsersKPI = document.getElementById('activeUsersKPI');
+  const platformPieCanvas = document.getElementById('userPlatformPieChart');
 
   if (!userStats || userStats.length === 0) {
     if (leaderboardCont) leaderboardCont.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8; font-weight:700;">No user data found in the sync records.</div>';
+    if (platformStatsCont) platformStatsCont.innerHTML = "";
+    if (teamAvgKPI) teamAvgKPI.textContent = "0";
+    if (teamIntKPI) teamIntKPI.textContent = "0%";
+    if (activeUsersKPI) activeUsersKPI.textContent = "0";
     return;
   }
+
+  const totalInvoices = userStats.reduce((sum, u) => sum + (u.totalRows || 0), 0);
+  const totalDisputes = userStats.reduce((sum, u) => sum + (u.disputeRows || 0), 0);
+  const avgRows = Math.round(totalInvoices / userStats.length);
+  const dataIntegrity = totalInvoices > 0 ? (((totalInvoices - totalDisputes) / totalInvoices) * 100).toFixed(1) : "0.0";
+
+  if (teamAvgKPI) teamAvgKPI.textContent = avgRows.toLocaleString();
+  if (teamIntKPI) teamIntKPI.textContent = `${dataIntegrity}%`;
+  if (activeUsersKPI) activeUsersKPI.textContent = userStats.length;
 
   // 1. Draw Grouped Bar Chart (Top 7 Users)
   if (window.InsightsCharts && chartCanvas) {
@@ -294,8 +311,21 @@ function renderUserInsights(payload) {
                       <span>MYN: ${u.myntra}</span>
                   </div>
               </div>
-          `;
+      `;
     }).join('');
+  }
+
+  if (window.InsightsCharts && platformPieCanvas) {
+    const teamAmazon = userStats.reduce((sum, u) => sum + (u.amazon || 0), 0);
+    const teamAjio = userStats.reduce((sum, u) => sum + (u.ajio || 0), 0);
+    const teamMyntra = userStats.reduce((sum, u) => sum + (u.myntra || 0), 0);
+    window.InsightsCharts.drawDonutChart(platformPieCanvas, [
+      { label: 'Amazon', value: teamAmazon },
+      { label: 'Ajio', value: teamAjio },
+      { label: 'Myntra', value: teamMyntra }
+    ], {
+      colors: ['#ff9900', '#1e293b', '#ff3f6c']
+    });
   }
 }
 

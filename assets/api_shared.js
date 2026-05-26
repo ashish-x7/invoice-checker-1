@@ -1667,40 +1667,40 @@ window.initializeDailyReportGlobal = () => {
       </div>
 
       <!-- Hidden Report Card Template for Screenshot -->
-      <div id="report-screenshot-template" style="position: absolute; left: -9999px; top: 0; width: 650px; background: #ffffff; padding: 30px; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif;">
+      <div id="report-screenshot-template" style="position: absolute; left: -9999px; top: 0; width: 760px; background: #ffffff; padding: 18px 22px; box-sizing: border-box; font-family: Arial, sans-serif; color: #111827;">
         
         <!-- Logo Header Block -->
-        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid #0f172a; padding-bottom: 16px;">
-          <img id="template-brand-logo" style="width: 54px; height: 54px; object-fit: contain;">
-          <div>
-            <div style="font-size: 28px; font-weight: 850; color: #1e293b; letter-spacing: -0.5px; line-height: 1.1;">Brand Central</div>
-            <div style="font-size: 13px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px;">Ecommerce Growth Accelerator</div>
+        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid #9ca3af; padding-bottom: 8px;">
+          <img id="template-brand-logo" style="width: 30px; height: 30px; object-fit: contain;">
+          <div style="text-align: left;">
+            <div style="font-size: 16px; font-weight: 400; color: #111827; line-height: 1.05;">Brand Central</div>
+            <div style="font-size: 8.5px; font-weight: 400; color: #2563eb; text-transform: uppercase; letter-spacing: 0;">Ecommerce Growth Accelerator</div>
           </div>
         </div>
 
         <!-- Title Block -->
-        <div style="text-align: center; margin-bottom: 20px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px; font-size: 18px; font-weight: 800; color: #1e293b; letter-spacing: 1px; text-transform: uppercase;">
+        <div style="text-align: center; margin-bottom: 10px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 5px; font-size: 13px; font-weight: 400; color: #111827; letter-spacing: 0; text-transform: uppercase;">
           DAILY WORK REPORT
         </div>
 
         <!-- Metadata Block -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px;">
           <tr>
-            <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; width: 120px; background: #f8fafc;">Name:</td>
-            <td id="template-user-name" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+            <td style="border: 1px solid #cbd5e1; padding: 4px 7px; font-weight: 400; color: #374151; width: 95px; background: #f8fafc;">Name:</td>
+            <td id="template-user-name" style="border: 1px solid #cbd5e1; padding: 4px 7px; font-weight: 400; color: #111827;"></td>
           </tr>
           <tr>
-            <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; background: #f8fafc;">Date & Time:</td>
-            <td id="template-datetime" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+            <td style="border: 1px solid #cbd5e1; padding: 4px 7px; font-weight: 400; color: #374151; background: #f8fafc;">Date & Time:</td>
+            <td id="template-datetime" style="border: 1px solid #cbd5e1; padding: 4px 7px; font-weight: 400; color: #111827;"></td>
           </tr>
         </table>
 
         <!-- Main Stats Table -->
-        <table id="template-stats-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+        <table id="template-stats-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 11px;">
           <thead>
-            <tr style="background: #dbeafe; font-weight: bold; text-align: left; color: #1e3a8a;">
-              <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 75%;">Activity / Work Item</th>
-              <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 25%; text-align: center;">Count</th>
+            <tr style="background: #eef2f7; font-weight: 400; text-align: left; color: #111827;">
+              <th style="border: 1px solid #94a3b8; padding: 4px 7px; width: auto; font-weight: 400;">Activity / Work Item</th>
+              <th style="border: 1px solid #94a3b8; padding: 4px 7px; width: 90px; text-align: center; font-weight: 400;">Count</th>
             </tr>
           </thead>
           <tbody id="template-stats-tbody">
@@ -1708,11 +1708,11 @@ window.initializeDailyReportGlobal = () => {
         </table>
 
         <!-- Other Work Section -->
-        <div id="template-other-work-section" style="margin-top: 20px; display: none;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <div id="template-other-work-section" style="margin-top: 12px; display: none;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
             <thead>
-              <tr style="background: #e2e8f0; font-weight: bold; text-align: left; color: #334155;">
-                <th style="border: 1.5px solid #94a3b8; padding: 8px 12px;">OTHER WORK</th>
+              <tr style="background: #eef2f7; font-weight: 400; text-align: left; color: #111827;">
+                <th style="border: 1px solid #94a3b8; padding: 4px 7px; font-weight: 400;">OTHER WORK</th>
               </tr>
             </thead>
             <tbody id="template-other-work-tbody">
@@ -1885,10 +1885,10 @@ window.downloadReportImageGlobal = async () => {
 
         const platforms = ['AJIO', 'AMAZON', 'MYNTRA'];
         const metrics = [
-            { key: 'sales', label: 'INVOICE CREATE', color: '#3b82f6', border: '5px solid #3b82f6' },
-            { key: 'purchases', label: 'BILL CREATE', color: '#10b981', border: '5px solid #10b981' },
-            { key: 'cn', label: 'CREDIT NOTE CREATE', color: '#ef4444', border: '5px solid #ef4444' },
-            { key: 'dn', label: 'DEBIT NOTE CREATE', color: '#ef4444', border: '5px solid #ef4444' }
+            { key: 'sales', label: 'INVOICE CREATE', color: '#2563eb', border: '3px solid #2563eb' },
+            { key: 'purchases', label: 'BILL CREATE', color: '#059669', border: '3px solid #059669' },
+            { key: 'cn', label: 'CREDIT NOTE CREATE', color: '#dc2626', border: '3px solid #dc2626' },
+            { key: 'dn', label: 'DEBIT NOTE CREATE', color: '#dc2626', border: '3px solid #dc2626' }
         ];
 
         let rowCount = 0;
@@ -1903,20 +1903,22 @@ window.downloadReportImageGlobal = async () => {
                     const tr = document.createElement('tr');
 
                     const tdLabel = document.createElement('td');
-                    tdLabel.style.border = '1px solid #cbd5e1';
+                    tdLabel.style.border = '1px solid #d1d5db';
                     tdLabel.style.borderLeft = m.border;
-                    tdLabel.style.padding = '8px 12px';
-                    tdLabel.style.fontWeight = '600';
-                    tdLabel.style.color = '#334155';
+                    tdLabel.style.padding = '4px 7px';
+                    tdLabel.style.fontWeight = '400';
+                    tdLabel.style.color = '#111827';
+                    tdLabel.style.lineHeight = '1.15';
                     tdLabel.innerText = `${p} ${m.label}:`;
 
                     const tdVal = document.createElement('td');
-                    tdVal.style.border = '1px solid #cbd5e1';
-                    tdVal.style.padding = '8px 12px';
+                    tdVal.style.border = '1px solid #d1d5db';
+                    tdVal.style.padding = '4px 7px';
                     tdVal.style.textAlign = 'center';
-                    tdVal.style.fontWeight = 'bold';
+                    tdVal.style.fontWeight = '400';
                     tdVal.style.color = m.color;
-                    tdVal.style.fontSize = '14px';
+                    tdVal.style.fontSize = '11px';
+                    tdVal.style.lineHeight = '1.15';
                     tdVal.innerText = inputVal;
 
                     tr.appendChild(tdLabel);
@@ -1929,8 +1931,8 @@ window.downloadReportImageGlobal = async () => {
         if (rowCount === 0) {
             const tr = document.createElement('tr');
             const tdLabel = document.createElement('td');
-            tdLabel.style.border = '1px solid #cbd5e1';
-            tdLabel.style.padding = '12px';
+            tdLabel.style.border = '1px solid #d1d5db';
+            tdLabel.style.padding = '5px 7px';
             tdLabel.style.textAlign = 'center';
             tdLabel.style.color = '#64748b';
             tdLabel.style.fontStyle = 'italic';
@@ -1954,10 +1956,12 @@ window.downloadReportImageGlobal = async () => {
                 otherCount++;
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.style.border = '1px solid #cbd5e1';
-                td.style.borderLeft = '5px solid #10b981';
-                td.style.padding = '8px 12px';
-                td.style.color = '#334155';
+                td.style.border = '1px solid #d1d5db';
+                td.style.borderLeft = '3px solid #10b981';
+                td.style.padding = '4px 7px';
+                td.style.color = '#111827';
+                td.style.fontWeight = '400';
+                td.style.lineHeight = '1.15';
                 td.innerText = val;
                 tr.appendChild(td);
                 otherWorkTbody.appendChild(tr);

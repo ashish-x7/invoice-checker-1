@@ -1,0 +1,142 @@
+/* CUSTOM POPUP SYSTEM */
+
+:root {
+  --popup-bg: rgba(255, 255, 255, 0.95);
+  --popup-blur: 15px;
+  --success-main: #10b981;
+  --error-main: #ef4444;
+  --warning-main: #f59e0b;
+  --info-main: #3b82f6;
+  --popup-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.custom-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-popup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.custom-popup-box {
+  background: var(--popup-bg);
+  backdrop-filter: blur(var(--popup-blur));
+  width: 90%;
+  max-width: 420px;
+  border-radius: 24px;
+  box-shadow: var(--popup-shadow);
+  padding: 32px;
+  text-align: center;
+  transform: scale(0.85) translateY(20px);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.custom-popup-overlay.active .custom-popup-box {
+  transform: scale(1) translateY(0);
+}
+
+.popup-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 32px;
+  animation: icon-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes icon-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.popup-type-success .popup-icon-wrapper { background: rgba(16, 185, 129, 0.15); color: var(--success-main); }
+.popup-type-error .popup-icon-wrapper { background: rgba(239, 68, 68, 0.15); color: var(--error-main); }
+.popup-type-warning .popup-icon-wrapper { background: rgba(245, 158, 11, 0.15); color: var(--warning-main); }
+.popup-type-info .popup-icon-wrapper { background: rgba(59, 130, 246, 0.15); color: var(--info-main); }
+
+.popup-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.popup-message {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.popup-btn {
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 120px;
+}
+
+.btn-confirm {
+  background: #1e293b;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Success special button */
+.popup-type-success .btn-confirm { background: var(--success-main); }
+.popup-type-success .btn-confirm:hover { background: #059669; }
+
+/* Error special button */
+.popup-type-error .btn-confirm { background: var(--error-main); }
+.popup-type-error .btn-confirm:hover { background: #dc2626; }
+
+/* Danger special (Red + Warning Icon) */
+.popup-type-danger .popup-icon-wrapper { background: rgba(239, 68, 68, 0.15); color: var(--error-main); }
+.popup-type-danger .btn-confirm { background: var(--error-main); }
+.popup-type-danger .btn-confirm:hover { background: #dc2626; }
+

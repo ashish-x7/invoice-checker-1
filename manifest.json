@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Invoice Checker Extension",
+  "version": "1.0",
+  "description": "Chrome extension to check invoices for Amazon, Ajio, and Myntra.",
+  "permissions": [
+    "tabs",
+    "downloads",
+    "storage",
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "logo.png",
+      "24": "logo.png",
+      "32": "logo.png",
+      "48": "logo.png",
+      "128": "logo.png"
+    }
+  },
+  "icons": {
+    "16": "logo.png",
+    "24": "logo.png",
+    "32": "logo.png",
+    "48": "logo.png",
+    "64": "logo.png",
+    "128": "logo.png"
+  },
+
+  "host_permissions": [
+    "*://*.brandcentral.in/*",
+    "https://script.google.com/*",
+    "https://script.googleusercontent.com/*"
+  ]
+}

@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ajio - Invoice Checker</title>
+  <script src="../../assets/web_chrome_compat.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/upload_modal.css">
+  <link rel="stylesheet" href="../../assets/insights.css">
+  <link rel="stylesheet" href="../../assets/chatbot.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 15px; background-color: #f8fafc; }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 5px;
+    }
+    .brand-logo-img {
+      height: 45px;
+      width: auto;
+    }
+    .brand-text-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .brand-main-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .brand-divider-line {
+      width: 100%;
+      height: 1.2px;
+      background-color: #1e293b;
+      margin: 2px 0;
+    }
+    .brand-sub-text {
+      font-size: 10px;
+      font-weight: 500;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    
+    .upload-section {
+      margin-bottom: 12px;
+      padding: 12px 18px;
+      background-color: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    table {
+      border-collapse: separate;
+      border-spacing: 0; /* Prevents gaps between cells */
+      margin-top: 20px;
+      border-left: 1px solid #ccc;
+      border-top: 1px solid #ccc;
+    }
+    
+    th, td {
+      border-right: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      white-space: nowrap; /* Prevents text from being squished */
+      font-size: 13px;
+    }
+    
+    tr {
+      content-visibility: auto; /* Hugely improves scroll performance on large lists */
+      contain-intrinsic-size: 0 35px;
+    }
+    
+    #tableContainer {
+      width: 100%;
+      max-height: 75vh;
+      overflow: auto; /* Enable both horizontal and vertical scrolling */
+      border: 1px solid #ddd;
+    }
+
+    .header-row {
+      background-color: rgb(198, 239, 206);
+      font-weight: bold;
+      position: sticky; /* Keep header visible when scrolling down */
+      top: 0;
+      z-index: 100; /* High z-index to stay above everything */
+    }
+
+    /* Freeze first column (Row Index) */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 50;
+      background-color: #f8fafc !important; /* Matches existing row indicator bg */
+      border-right: 2px solid #cbd5e1 !important;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    
+    /* Ensure Header + First Column intersection stays on top of both scrolls */
+    .header-row th:first-child {
+      z-index: 150;
+      background-color: rgb(198, 239, 206) !important;
+      left: 0;
+      position: sticky;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.1) !important;
+      background: rgba(226, 232, 240, 0.4) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      border-radius: 8px;
+      font-weight: 500 !important;
+      font-size: 14px;
+      color: #334155 !important;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover { background-color: rgba(226, 232, 240, 0.7) !important; }
+    .tab-btn.active {
+      background-color: rgba(52, 73, 94, 0.15) !important;
+      color: #34495e !important;
+      border-color: rgba(52, 73, 94, 0.4) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      padding: 30px;
+      border-radius: 20px;
+      width: 850px; /* Increased width as requested */
+      max-width: 95%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .brand-title {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #1a1a1a;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .modal-body {
+      background: white;
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    .detail-row {
+      display: flex;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-label {
+      flex: 1;
+      padding: 12px 15px;
+      background: #f8fafc;
+      font-weight: 600;
+      color: #4a5568;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      border-right: 1px solid #edf2f7;
+    }
+
+    .detail-value {
+      flex: 1.5;
+      padding: 12px 15px;
+      color: #1a202c;
+      font-weight: 500;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #c6efce;
+      color: #006100;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .modal-footer {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .modal-btn {
+      padding: 10px 25px;
+      border-radius: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.25s ease;
+      font-size: 14px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    #modalNextBtn { background: rgba(198, 239, 206, 0.3); color: #006100; border-color: rgba(40, 167, 69, 0.3); }
+    #modalAutoBtn { background: rgba(198, 240, 255, 0.3); color: #007bff; border-color: rgba(0, 123, 255, 0.3); }
+    #modalStopBtn { background: rgba(255, 214, 214, 0.3); color: #dc3545; border-color: rgba(220, 53, 69, 0.3); }
+    #modalCloseBtn { background: rgba(238, 238, 238, 0.3); color: #333; border-color: rgba(204, 204, 204, 0.3); }
+
+    .insights-subtitle { font-size: 13px; color: #64748b; font-weight: 600; margin-top: 2px; }
+    .insights-status { margin-bottom: 20px; font-weight: 700; font-size: 14px; }
+    
+    .filter-active-badge {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        background: #f0f7ff;
+        border: 1px solid #002e6e33;
+        color: #002e6e;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .clear-filter-x {
+        cursor: pointer;
+        padding: 0 4px;
+        font-weight: 800;
+        font-size: 14px;
+        color: #ef4444;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+    .ins-card {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #f1f5f9;
+      transition: transform 0.2s;
+    }
+    .ins-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+    .ins-kpi-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .ins-kpi-value { font-size: 24px; font-weight: 800; color: #0f172a; }
+    .ins-kpi-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; font-weight: 600; }
+
+    .ins-panel {
+      grid-column: span 3;
+      background: white;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #f1f5f9;
+      min-height: 380px;
+    }
+    .ins-panel.pie { grid-column: span 2; }
+    .ins-panel h3 { margin: 0 0 20px 0; font-size: 17px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    
+    .filter-active-badge {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        background: #f0f7ff;
+        border: 1px solid #002e6e33;
+        color: #002e6e;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    .clear-filter-x {
+        cursor: pointer;
+        padding: 0 4px;
+        font-weight: 800;
+        font-size: 14px;
+        color: #ef4444;
+    }
+    
+    /* Vendor Widget CSS */
+    .vendor-search-container {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    .vendor-search-input {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .vendor-search-input:focus { border-color: #002e6e; background: #fff; box-shadow: 0 0 0 3px rgba(0, 46, 110, 0.1); }
+    
+    .vendor-list-scroll {
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .vendor-list-scroll::-webkit-scrollbar { width: 5px; }
+    .vendor-list-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+    .vendor-list-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .vendor-item {
+      display: grid;
+      grid-template-columns: 35px 1fr 120px;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: #fff;
+      border: 1px solid #f1f5f9;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vendor-item:hover { 
+      background: #f0f7ff; 
+      border-color: #002e6e44;
+      transform: translateX(3px);
+    }
+    .v-rank { font-weight: 800; color: #94a3b8; font-size: 13px; }
+    .v-info { display: flex; flex-direction: column; gap: 2px; }
+    .v-name { font-weight: 700; color: #1e293b; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+    .v-stats { font-size: 11px; color: #64748b; font-weight: 600; }
+    .v-value-box { text-align: right; }
+    .v-value { font-weight: 800; color: #0f172a; font-size: 14px; }
+    .v-bar-wrap { height: 4px; background: #f1f5f9; border-radius: 2px; margin-top: 6px; overflow: hidden; width: 100%; }
+    .v-bar-fill { height: 100%; background: #002e6e; border-radius: 2px; width: 0%; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    .modal-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.08); filter: brightness(1.05); }
+
+    .logo-img {
+      position: absolute;
+      position: sticky;
+      top: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      background: #fff;
+      z-index: 100;
+      border-radius: 8px;
+      padding: 5px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 5px;
+    }
+    .brand-logo-img {
+      height: 45px;
+      width: auto;
+    }
+    .brand-text-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .brand-main-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .brand-divider-line {
+      width: 100%;
+      height: 1.2px;
+      background-color: #1e293b;
+      margin: 2px 0;
+    }
+    .brand-sub-text {
+      font-size: 10px;
+      font-weight: 500;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    .section-title {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    /* PREMIUM PAGINATION */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      margin: 25px 0;
+      font-family: 'Outfit', sans-serif;
+      flex-wrap: wrap;
+    }
+    .page-block {
+      min-width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(222, 226, 230, 0.4);
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: all 0.2s;
+      color: #495057;
+      user-select: none;
+    }
+    .page-block:hover {
+      background-color: rgba(248, 249, 250, 0.6);
+      border-color: #adb5bd;
+      color: #212529;
+    }
+    .page-block.active {
+      background-color: rgba(52, 73, 94, 0.15);
+      color: #34495e;
+      border-color: rgba(52, 73, 94, 0.4);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .page-block.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #e9ecef;
+    }
+    .page-ellipsis {
+      padding: 0 8px;
+      color: #adb5bd;
+      font-weight: bold;
+    }
+    .pagination-goto {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 15px;
+      padding-left: 15px;
+      border-left: 1px solid #dee2e6;
+    }
+    .goto-input {
+      width: 60px;
+      height: 35px;
+      padding: 0 10px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .goto-btn {
+      height: 35px;
+      padding: 0 15px;
+      background: rgba(52, 73, 94, 0.1);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: #34495e;
+      border: 1px solid rgba(52, 73, 94, 0.2);
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .goto-btn:hover {
+      background: rgba(52, 73, 94, 0.2);
+    }
+    .row-select-container {
+      margin-right: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .row-select {
+      height: 35px;
+      padding: 0 10px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: white;
+      font-weight: 600;
+    }
+
+    /* UPLOAD MODAL INTERNAL STYLES */
+    .upload-group {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .upload-group h4 { margin: 0 0 12px 0; color: #34495e; font-size: 15px; border-bottom: 2px solid #34495e; display: inline-block; padding-bottom: 2px; }
+    .upload-subgroup { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    .upload-subgroup label { font-size: 12px; font-weight: 700; color: #64748b; min-width: 140px; }
+    .upload-modal-footer { border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: flex-end; }
+    
+    .process-btn-modal {
+      padding: 6px 12px;
+      background: #34495e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* TOP TOOLBAR */
+    .top-toolbar {
+      display: flex;
+      gap: 12px;
+      margin: 15px 0;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      align-items: center;
+    }
+    .toolbar-btn {
+      padding: 6px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.1) !important;
+      background: rgba(255, 255, 255, 0.4) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      font-size: 11px;
+      font-weight: 500 !important;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #334155 !important;
+    }
+    .toolbar-btn:hover { background: rgba(248, 250, 252, 0.7) !important; border-color: #cbd5e1 !important; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important; }
+    .glass-green {
+      background: rgba(16, 185, 129, 0.12) !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      color: #065f46 !important;
+      padding: 8px 14px !important;
+      border-radius: 999px !important;
+      min-width: unset !important;
+      white-space: nowrap !important;
+      box-shadow: 0 8px 18px rgba(16,185,129,0.08) !important;
+    }
+    .glass-green:hover {
+      background: rgba(16, 185, 129, 0.18) !important;
+    }
+
+    /* DROPDOWN MENU */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropbtn {
+      background: rgba(108, 92, 231, 0.15) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      color: #6c5ce7 !important;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500 !important;
+      border: 1px solid rgba(108, 92, 231, 0.3) !important;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 180px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      top: 100%; /* Align to bottom of button */
+    }
+    /* Invisible bridge to prevent closing on hover gap */
+    .dropdown-content::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 0;
+      width: 100%;
+      height: 10px;
+    }
+    .dropdown-content button {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+    .dropdown-content button:last-child { margin-bottom: 0; }
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    .dropdown:hover .dropbtn { background-color: #2d3748; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .inline-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      width: 320px;
+    }
+    .inline-search input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      width: 100%;
+      padding: 5px 0;
+    }
+    /* COLUMN FILTER STYLES */
+    .th-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .filter-trigger {
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      color: #718096;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    .filter-trigger:hover {
+      background: rgba(0,0,0,0.05);
+      color: #2d3748;
+    }
+    .filter-trigger.active {
+      color: #6c5ce7;
+      background: rgba(108, 92, 231, 0.1);
+    }
+
+    .filter-menu {
+      position: absolute;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      width: 260px;
+      z-index: 5000;
+      font-family: 'Outfit', sans-serif;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .filter-menu-header {
+      padding: 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .filter-search-container {
+      margin-top: 8px;
+      position: relative;
+    }
+
+    .filter-search-input {
+      width: 100%;
+      padding: 8px 12px 8px 30px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .filter-search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .filter-options-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .filter-option {
+      padding: 6px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.1s;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .filter-option:hover {
+      background: #f1f5f9;
+    }
+
+    .filter-option input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .filter-menu-footer {
+      padding: 10px 12px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #f8fafc;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .filter-btn-apply {
+      background: #6c5ce7;
+      color: white;
+    }
+
+    .filter-btn-clear {
+      background: white;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    .sort-options {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .sort-btn {
+      width: 100%;
+      padding: 8px;
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sort-btn:hover {
+      background: #f1f5f9;
+    }
+  </style>
+
+</head>
+<body>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%;">
+    <div class="brand-container">
+      <img src="../../assets/logo.png" class="brand-logo-img" alt="Logo">
+      <div class="brand-text-stack">
+        <div class="brand-main-text">Brand Central</div>
+        <div class="brand-divider-line"></div>
+        <div class="brand-sub-text">Ecommerce Growth Accelerator</div>
+      </div>
+    </div>
+    <div id="userNicknameContainer"></div>
+    <div id="globalActionHost" style="display:none;"></div>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab-btn active" id="tabPortalBtn">PORTAL</button>
+    <button class="tab-btn" id="tabSaleBtn">SALE</button>
+    <button class="tab-btn" id="tabPurchaseBtn">PURCHASE</button>
+    <button class="tab-btn" id="tabQueueBtn" style="border-bottom: 3px solid #f1c40f;">QUEUE &#x1F504;</button>
+  </div>
+
+  <!-- Main Body is now just Top Toolbar and Table -->
+  <div id="topToolbar" class="top-toolbar">
+    <div style="font-weight: 800; color: #64748b; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+      <span>&#x1F6E0;&#xFE0F; TOOLS:</span>
+    </div>
+
+    <!-- 1. Upload Files -->
+    <button id="openUploadModalBtn" class="toolbar-btn">Upload Files &#x1F4C1;</button>
+
+    <!-- 2. Invoice Details -->
+    <button id="invoiceDetailsBtnHeader" class="toolbar-btn">Invoice Details &#x1F381;</button>
+
+    <!-- 3. Bill Details -->
+    <button id="billDetailsBtnHeader" class="toolbar-btn">Bill Details &#x1F4E6;</button>
+
+    <!-- 4. Actions Dropdown -->
+    <div class="dropdown">
+      <button class="dropbtn">Actions &#x2699;&#xFE0F; <span style="font-size: 10px;">&#9660;</span></button>
+      <div class="dropdown-content">
+        <button id="toggleFormulaBtn" class="toolbar-btn" style="margin-bottom: 8px;">Show Formulas</button>
+        <button id="refreshBtn" class="toolbar-btn" style="margin-bottom: 8px;">Refresh Formulas &#x1F504;</button>
+        <button id="clearDataBtn" class="toolbar-btn">Clear All Data &#x1F5D1;&#xFE0F;</button>
+      </div>
+    </div>
+
+    <!-- 5. Push Details -->
+    <button id="sendToGoogleSheetBtn" class="toolbar-btn glass-green">Push Details &#x1F680;</button>
+    <span id="pushStatus" style="margin-left: 10px; font-weight: bold; color: #27ae60; opacity: 0; transition: opacity 0.5s; font-size: 14px;">DONE &#x2705;</span>
+    <button id="dataUploadBtn" class="toolbar-btn glass-blue" style="margin-left: 10px;">DATA UPLOAD 📤</button>
+
+
+    <div id="headerRightSection" style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+        <!-- API Tracker -->
+        <div id="apiTrackerHeader" title="Click to check remaining limit (Costs 1 call)" style="font-size: 12px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; cursor: pointer; border: 1px solid #e2e8f0; transition: all 0.2s;">
+            Remaining API Call : <span id="apiCountDisplay">***</span>
+        </div>
+        
+        <div class="inline-search" style="width: 200px; margin: 0;">
+        <span>&#x1F50D;</span>
+            <input type="text" id="searchFInput" placeholder="Search GST ID (Col F)...">
+        </div>
+        <div id="purchaseSellerBadge" style="display:none; font-size: 13px; font-weight: 700; background: #fff5eb; padding: 6px 15px; border: 2px solid #c05621; border-radius: 8px; color: #c05621; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap;">
+            Seller: <span id="purchaseSellerName">--</span>
+        </div>
+        <div id="partyCodeBadge" style="display:none; font-size: 13px; font-weight: 700; background: #f0f7ff; padding: 6px 15px; border: 2px solid #3b82f6; border-radius: 8px; color: #3b82f6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap;">
+            Party Code: <span id="partyCodeValue">--</span>
+        </div>
+        <div id="tableInfoBox" style="font-size: 13px; font-weight: 700; background: #fff; padding: 6px 15px; border: 2px solid #34495e; border-radius: 8px; color: #34495e; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">-- Rows</div>
+    </div>
+  </div>
+
+  <!-- QUEUE STATUS BAR (Visible only when Queue tab is active or data is pending) -->
+  <div id="queueContainer" style="display:none; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Background Sync Queue</h3>
+        <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;">Data is being transferred to Google Sheets in the background. You can start a new batch in other tabs.</p>
+      </div>
+      <div style="display:flex; align-items: center; gap: 20px;">
+        <div style="text-align: right;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pending Rows</div>
+          <div id="queuePendingCount" style="font-size: 24px; font-weight: 800; color: #6c5ce7;">0</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Status</div>
+          <div id="queueWorkerStatus" style="font-size: 14px; font-weight: 700; color: #27ae60;">Idle</div>
+        </div>
+        <button id="clearQueueBtn" class="toolbar-btn" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;">Clear Queue</button>
+      </div>
+    </div>
+    <div style="margin-top: 15px; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
+        <div id="queueProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #6c5ce7, #a29bfe); transition: width 0.3s;"></div>
+    </div>
+  </div>
+  <!-- UPLOAD FILES MODAL -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-content">
+      <div id="closeUploadModalX" class="close-modal">&times;</div>
+
+      <div class="modal-header">
+        <div class="modal-title">AJIO DATA CENTER</div>
+        <div class="modal-subtitle">Upload & Process Portal, Sale, Purchase</div>
+      </div>
+
+      <div class="fm-container">
+        <div class="fm-card" style="border-left: 5px solid #334155;">
+          <div class="fm-header">
+            <div class="fm-title" style="color:#334155;">1. PORTAL DATA</div>
+          </div>
+          <div class="fm-body">
+            <div class="fm-row">
+              <span>Portal Excel:</span>
+              <input type="file" id="excelUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:12px;">
+              <span id="portalStatus" class="fm-status"></span>
+              <button id="processBtn" class="fm-btn btn-portal">Process Portal</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fm-card" style="border-left: 5px solid #7c3aed;">
+          <div class="fm-header">
+            <div class="fm-title" style="color:#7c3aed;">2. SALE DATA</div>
+          </div>
+          <div class="fm-body">
+            <div class="fm-row">
+              <span>Sale Details:</span>
+              <input type="file" id="saleDetailsUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div class="fm-row">
+              <span>Sale Summary:</span>
+              <input type="file" id="saleSummaryUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div class="fm-row">
+              <span>Duplicate Invoice:</span>
+              <input type="file" id="duplicateInvoiceUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div id="downloadButtons" style="display:none; gap:10px; flex-wrap:wrap;">
+              <button id="downloadInvoiceBtn" class="fm-btn btn-purchase" style="padding:8px 12px;">Download Sale Invoice</button>
+              <button id="downloadDisputeBtn" class="fm-btn btn-portal" style="padding:8px 12px; display:none;">Download Price Dispute</button>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:12px;">
+              <span id="saleStatus" class="fm-status"></span>
+              <button id="processSaleBtn" class="fm-btn btn-sale">Process Sale</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fm-card" style="border-left: 5px solid #16a34a;">
+          <div class="fm-header">
+            <div class="fm-title" style="color:#16a34a;">3. PURCHASE DATA</div>
+          </div>
+          <div class="fm-body">
+            <div class="fm-row">
+              <span>Purchase Detail:</span>
+              <input type="file" id="purchaseDetailUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div class="fm-row">
+              <span>Purchase Summary:</span>
+              <input type="file" id="purchaseSummaryUpload" class="fm-input" accept=".xlsx, .xlsm, .xls">
+            </div>
+            <div id="purchaseDownloadButtons" style="display:none; gap:10px; flex-wrap:wrap;">
+              <button id="downloadPurchaseBtn" class="fm-btn btn-purchase" style="padding:8px 12px;">Download Purchase Bill</button>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:12px;">
+              <span id="purchaseStatus" class="fm-status"></span>
+              <button id="processPurchaseBtn" class="fm-btn btn-purchase">Process Purchase</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="closeUploadModalBtn" class="btn-close-fm">CLOSE</button>
+      </div>
+    </div>
+  </div>
+<div id="insightsContainer" style="display:none;">
+    <div class="insights-wrap">
+      <div class="insights-header">
+        <div>
+          <div class="insights-title">Insights Hub</div>
+          <div class="insights-subtitle" id="insightsSubtitle">Sheet: AJIO</div>
+          <div class="insights-tabs" style="margin-top: 15px; display: flex; gap: 8px;">
+            <button id="insTabGlobalBtn" class="ins-tab-btn active">
+              <span style="font-size: 14px;">🌍</span> Platform Trends
+            </button>
+            <button id="insTabUserBtn" class="ins-tab-btn">
+              <span style="font-size: 14px;">👥</span> User Analytics
+            </button>
+          </div>
+        </div>
+        <div class="insights-controls">
+          <select id="insightsRowLimit" class="insights-select">
+            <option value="1000" selected>Last 1000 rows</option>
+            <option value="2000">Last 2000 rows</option>
+            <option value="5000">Last 5000 rows</option>
+            <option value="8000">Last 8000 rows</option>
+            <option value="10000">Last 10000 rows</option>
+          </select>
+          <button id="insightsRefreshBtn" class="insights-btn" type="button">Refresh</button>
+          <button id="insightsBackBtn" class="insights-btn" type="button">Back to Table</button>
+        </div>
+      </div>
+
+      <div id="insightsStatus" class="insights-status"></div>
+
+      <!-- Active Filter Badge -->
+      <div id="vendorFilterBadge" class="filter-active-badge">
+        <span>Deep Dive: <b id="filteredVendorName"></b></span>
+        <span class="clear-filter-x" id="clearVendorFilterBtn" title="Clear Filter">×</span>
+      </div>
+
+      <div id="insGlobalView" class="insights-grid">
+        <div class="ins-card">
+          <div class="ins-kpi-label">Rows</div>
+          <div class="ins-kpi-value" id="kpiRows">0</div>
+          <div class="ins-kpi-hint" id="kpiRowsHint">Loaded: 0</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label">Sale Total</div>
+          <div class="ins-kpi-value" id="kpiSale">0</div>
+          <div class="ins-kpi-hint">Sum of Sale Amount</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label">Purchase Total</div>
+          <div class="ins-kpi-value" id="kpiPurchase">0</div>
+          <div class="ins-kpi-hint">Sum of Purchase Amount</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label" style="color: #10b981;">ALL CLEAR</div>
+          <div class="ins-kpi-value" id="kpiAllClear">0</div>
+          <div class="ins-kpi-hint" id="kpiAllClearHint">Perfect Match</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label" style="color: #ef4444;">Top Issue</div>
+          <div class="ins-kpi-value" id="kpiTopRemark">-</div>
+          <div class="ins-kpi-hint" id="kpiTopRemarkHint">0 rows</div>
+        </div>
+
+        <div class="ins-panel">
+          <h3>Daily Rows</h3>
+          <canvas id="insightsLineChart"></canvas>
+        </div>
+        <div class="ins-panel">
+          <h3>Sale vs Purchase</h3>
+          <canvas id="insightsBarChart"></canvas>
+        </div>
+        <div class="ins-panel pie">
+          <h3>Remarks</h3>
+          <canvas id="insightsPieChart"></canvas>
+        </div>
+
+        <div class="ins-panel" style="grid-column: span 10; min-height: 520px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; font-size: 15px; font-weight: 800; color: #1e293b;">AJIO Vendor Performance Hub</h3>
+            <div style="width: 300px;" class="vendor-search-container">
+              <input type="text" id="vendorSearchInput" class="vendor-search-input" placeholder="Search vendor by name...">
+            </div>
+          </div>
+          
+          <!-- Visual Summary: Top 5 Stats & Donut Chart -->
+          <div style="display: flex; gap: 24px; align-items: flex-start; margin-bottom: 28px; background: rgba(248, 250, 252, 0.5); padding: 16px; border-radius: 14px;">
+            <div style="flex: 1.2;">
+              <h4 style="margin: 0 0 16px; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Market Dominance (Top 5)</h4>
+              <div id="vendorTopStats" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align:center; color: #94a3b8; font-size: 12px; padding: 20px;">Calculating share...</div>
+              </div>
+            </div>
+            <div style="flex: 1; height: 180px; position: relative;">
+              <canvas id="vendorDonutChart"></canvas>
+            </div>
+          </div>
+
+          <div id="vendorLeaderboardList" class="vendor-list-scroll" style="max-height: 320px;">
+            <div style="text-align:center; padding: 40px; color: #94a3b8; font-weight: 700;">No vendor data available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: User Performance View -->
+      <div id="insUserView" style="display: none; animation: fadeIn 0.4s ease;">
+        <div class="user-analytics-grid">
+          <!-- Big Performance Chart -->
+          <div class="ins-panel" style="grid-column: span 10; min-height: 400px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h3 style="margin:0; font-size: 16px; font-weight: 800; color: #1e293b;">User Productivity vs Disputes</h3>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b; font-weight: 600;">Comparison of total work vs issues found</p>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="width:12px; height:12px; border-radius:3px; background:linear-gradient(135deg, #6366f1, #a855f7);"></div>
+                        <span style="font-size:11px; font-weight:700; color:#475569;">Invoices</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="width:12px; height:12px; border-radius:3px; background:linear-gradient(135deg, #f43f5e, #fb7185);"></div>
+                        <span style="font-size:11px; font-weight:700; color:#475569;">Disputes</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="userProductivityChart"></canvas>
+          </div>
+
+          <!-- Leaderboard List -->
+          <div class="ins-panel" style="grid-column: span 6; min-height: 450px;">
+            <h3 style="margin:0 0 20px; font-size: 15px;">Performance Leaderboard</h3>
+            <div id="userLeaderboardContent" style="display: flex; flex-direction: column; gap: 12px; max-height: 450px; overflow-y: auto; padding-right: 8px;">
+                <div style="text-align:center; padding: 40px; color: #94a3b8; font-weight: 700;">Loading leaderboard...</div>
+            </div>
+          </div>
+
+          <!-- Platform Distribution Stats -->
+          <div class="ins-panel" style="grid-column: span 4; min-height: 450px;">
+            <h3 style="margin:0 0 20px; font-size: 15px;">Cross-Platform Spread</h3>
+            <div id="userPlatformWorkload" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="text-align:center; padding: 40px; color: #94a3b8; font-weight: 700;">Analyzing distribution...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<div id="tableContainer"></div>
+
+  <div id="paginationControls" style="display: none;" class="pagination-container">
+    <!-- Row selector -->
+    <div class="row-select-container">
+      <span style="font-size: 13px; font-weight: 600; color: #64748b;">Show</span>
+      <select id="pageSizeSelect" class="row-select">
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+      </select>
+      <span style="font-size: 13px; font-weight: 600; color: #64748b;">rows</span>
+    </div>
+
+    <!-- Page Number Blocks will be injected here -->
+    <div id="pageBlocks" style="display: flex; gap: 5px; align-items: center;"></div>
+
+    <!-- Go To Jump Container -->
+    <div class="pagination-goto">
+      <span style="font-size: 13px; font-weight: 600; color: #64748b;">Go to:</span>
+      <input type="number" id="jumpPageInput" class="goto-input" placeholder="...">
+      <button id="jumpPageBtn" class="goto-btn">Go</button>
+    </div>
+  </div>
+
+  <!-- INVOICE DETAILS MODAL -->
+  <div id="invoiceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="logo-img">
+            <svg viewBox="0 0 100 100" width="70" height="70">
+                <circle cx="50" cy="50" r="40" fill="#2d3748" />
+                <path d="M50 20 A30 30 0 1 1 50 80" fill="none" stroke="#f6993f" stroke-width="8" stroke-linecap="round" />
+                <circle cx="50" cy="50" r="10" fill="#f6993f" />
+            </svg>
+        </div>
+        <div class="brand-title">BRAND CENTRAL</div>
+        <div class="subtitle">&#x1F381; SALE INVOICE DETAILS <span id="mdlOverallStatus" style="font-weight: 800; margin-left: 10px;"></span></div>
+        <!-- Injected Timer Widget -->
+        <div class="modal-timer-container" id="ajioInvoiceTimerContainer" style="margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 15px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #64748b;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>⏱️ Elapsed:</span>
+            <span id="ajioInvoiceTimerVal" style="font-family: monospace; font-size: 14px;">00:00</span>
+          </div>
+          <div style="width: 1px; height: 14px; background: #e2e8f0;"></div>
+          <div>
+            <span>📊 Speed:</span>
+            <span id="ajioInvoiceTimerSpeed">0.0s / inv</span>
+          </div>
+          <div style="width: 1px; height: 14px; background: #e2e8f0;"></div>
+          <div>
+            <span>🔮 Est. Remaining:</span>
+            <span id="ajioInvoiceTimerRemaining">--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-body">
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4C4; INVOICE NO.</div>
+          <div class="detail-value" id="mdlInvoiceNo">AJ27S101-1555</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4C5; INVOICE DATE</div>
+          <div class="detail-value" id="mdlInvoiceDate">04-08-2026</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F194; INVOICE ID</div>
+          <div class="detail-value" id="mdlInvoiceId">5162213210</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">&#x1F4A1; INVOICE COUNT</div>
+            <div class="detail-value" style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+              <span id="mdlInvoiceCount">1/1300</span>
+              <input type="number" id="mdlInvoiceJumpInput" min="1" placeholder="Jump no." style="width:90px; padding:6px 8px; border:1px solid #cbd5e0; border-radius:8px; text-align:center;">
+            </div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">&#x1F3F7;&#xFE0F; SELLER NAME</div>
+            <div class="detail-value" id="mdlInvoiceSellerName">--</div>
+        </div>
+        
+        <div style="background: #e2e8f0; height: 1px; width: 100%; margin: 10px 0; border-style: dashed; border-width: 1px 0 0 0;"></div>
+        
+        <!-- PORTAL / SALE HEADERS (BICH ME) -->
+        <div class="detail-row" style="background: #edf2f7; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">
+          <div class="detail-label" style="background: transparent;">&#x1F4CA; Comparison</div>
+          <div class="detail-value">PORTAL</div>
+          <div class="detail-value">SALE</div>
+          <div class="detail-value">STATUS</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4E6; TOTAL WITHOUT TAX</div>
+          <div class="detail-value"><span id="mdlNoTaxPortal">--</span></div>
+          <div class="detail-value"><span id="mdlNoTaxSale">--</span></div>
+          <div class="detail-value"><span id="mdlNoTaxStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F6CD;&#xFE0F; QUANTITY</div>
+          <div class="detail-value"><span id="mdlQtyPortal">--</span></div>
+          <div class="detail-value"><span id="mdlQtySale">--</span></div>
+          <div class="detail-value"><span id="mdlQtyStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label" style="flex-direction: column; align-items: start; gap: 0;">
+            <span>&#x1F69A; TOTAL CGST</span>
+            <span style="font-size: 10px; color: #718096;">(PORTAL / SALE)</span>
+          </div>
+          <div class="detail-value"><span id="mdlCgstPortal">--</span></div>
+          <div class="detail-value"><span id="mdlCgstSale">--</span></div>
+          <div class="detail-value"><span id="mdlCgstStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label" style="flex-direction: column; align-items: start; gap: 0;">
+            <span>&#x1F69A; TOTAL SGST</span>
+            <span style="font-size: 10px; color: #718096;">(PORTAL / SALE)</span>
+          </div>
+          <div class="detail-value"><span id="mdlSgstPortal">--</span></div>
+          <div class="detail-value"><span id="mdlSgstSale">--</span></div>
+          <div class="detail-value"><span id="mdlSgstStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4B3; ROUND OFF</div>
+          <div class="detail-value"><span id="mdlRoundPortal">--</span></div>
+          <div class="detail-value"><span id="mdlRoundSale">--</span></div>
+          <div class="detail-value"><span id="mdlRoundStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label" style="background: #fff5eb; color: #c05621; font-weight: 800;">&#x1F4B0; TOTAL WITH TAX</div>
+          <div class="detail-value" style="font-weight: 800;"><span id="mdlWithTaxPortal">--</span></div>
+          <div class="detail-value" style="font-weight: 800;"><span id="mdlWithTaxSale">--</span></div>
+          <div class="detail-value"><span id="mdlWithTaxStatus" class="status-badge">--</span></div>
+        </div>
+
+        
+      </div>
+      
+      <div style="margin-top: 14px; padding: 14px; border: 1px solid #dbe4ef; border-radius: 12px; background: #f8fafc;">
+        <div style="font-size: 13px; font-weight: 800; color: #475569; margin-bottom: 8px;">Rename PDF ZIP With Seller Name</div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="file" id="ajioInvoiceZipInput" accept=".zip" style="flex:1; min-width:220px; padding:8px; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
+          <button id="ajioInvoiceZipBtn" class="modal-btn" style="background:#dbeafe; border:1px solid #3b82f6;">UPLOAD & DOWNLOAD ZIP</button>
+        </div>
+        <div id="ajioInvoiceZipStatus" style="margin-top:8px; font-size:12px; color:#64748b;">PDF name format: Old Name Seller Name.pdf</div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="modalRestartBtn" class="modal-btn" style="background: #e0e0e0; border: 1px solid #999;">RESTART</button>
+        <button id="modalNextBtn" class="modal-btn">NEXT</button>
+        <button id="modalAutoBtn" class="modal-btn">AUTO</button>
+        <button id="modalStopBtn" class="modal-btn">STOP</button>
+        <button id="modalCloseBtn" class="modal-btn">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PURCHASE BILL MODAL -->
+  <div id="purchaseModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="logo-img">
+            <svg viewBox="0 0 100 100" width="70" height="70">
+                <circle cx="50" cy="50" r="40" fill="#2d3748" />
+                <path d="M50 20 A30 30 0 1 1 50 80" fill="none" stroke="#f6993f" stroke-width="8" stroke-linecap="round" />
+                <circle cx="50" cy="50" r="10" fill="#f6993f" />
+            </svg>
+        </div>
+        <div class="brand-title">BRAND CENTRAL</div>
+        <div class="subtitle">&#x1F4E6; PURCHASE BILL DETAILS</div>
+        <!-- Injected Timer Widget -->
+        <div class="modal-timer-container" id="ajioBillTimerContainer" style="margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 15px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #64748b;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>⏱️ Elapsed:</span>
+            <span id="ajioBillTimerVal" style="font-family: monospace; font-size: 14px;">00:00</span>
+          </div>
+          <div style="width: 1px; height: 14px; background: #e2e8f0;"></div>
+          <div>
+            <span>📊 Speed:</span>
+            <span id="ajioBillTimerSpeed">0.0s / inv</span>
+          </div>
+          <div style="width: 1px; height: 14px; background: #e2e8f0;"></div>
+          <div>
+            <span>🔮 Est. Remaining:</span>
+            <span id="ajioBillTimerRemaining">--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-body">
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4C4; BILL NO.</div>
+          <div class="detail-value" id="mBillNo">--</div>
+        </div>
+        <div id="mBillDetailsError" class="detail-row" style="display: none; background: rgba(16, 185, 129, 0.12); border-left: 4px solid #10b981;">
+          <div class="detail-label" style="background: transparent; color: #065f46; font-weight: 800;">⚠️ BILL DETAILS</div>
+          <div class="detail-value" style="color: #065f46; font-weight: 800; font-size: 14px;">MISSING</div>
+          <div class="detail-value" style="color: #065f46; font-weight: 800;">AUTO STOP</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4C5; BILL DATE</div>
+          <div class="detail-value" id="mBillDate">--</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F194; BILL ID</div>
+          <div class="detail-value" id="mBillId">--</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">&#x1F4A1; BILL COUNT</div>
+            <div class="detail-value" style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+              <span id="mBillCount">--</span>
+              <input type="number" id="mBillJumpInput" min="1" placeholder="Jump no." style="width:90px; padding:6px 8px; border:1px solid #cbd5e0; border-radius:8px; text-align:center;">
+            </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F3F7;&#xFE0F; SELLER NAME</div>
+          <div class="detail-value" id="mBillSellerName">--</div>
+        </div>
+        
+        <div style="background: #e2e8f0; height: 1px; width: 100%; margin: 10px 0; border-style: dashed; border-width: 1px 0 0 0;"></div>
+        
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4E6; TOTAL W/O TAX (X)</div>
+          <div class="detail-value" id="mNoTax">--</div>
+          <div class="detail-value"><span id="mNoTaxStatus" class="status-badge">--</span></div>
+        </div>
+
+        <div class="detail-row" style="background: #edf2f7; font-weight: 800; font-size: 11px;">
+          <div class="detail-label" style="background: transparent;">&#x1F6CD;&#xFE0F; QUANTITY</div>
+          <div class="detail-value" id="mQtyPortal" style="font-size:12px;">P: --</div>
+          <div class="detail-value" id="mQtyPurchase" style="font-size:12px;">PUR: --</div>
+          <div class="detail-value"><span id="mQtyStatus" class="status-badge">--</span></div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">&#x1F69A; TOTAL CGST (Y)</div>
+          <div class="detail-value" id="mCgst">--</div>
+          <div class="detail-value"><span id="mCgstStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F69A; TOTAL SGST (Z)</div>
+          <div class="detail-value" id="mSgst">--</div>
+          <div class="detail-value"><span id="mSgstStatus" class="status-badge">--</span></div>
+        </div>
+
+        <div class="detail-row" style="background: #edf2f7; font-weight: 800; font-size: 11px;">
+          <div class="detail-label" style="background: transparent;">&#x1F4C9; TDS CHECK</div>
+          <div class="detail-value" id="mTdsData" style="font-size:12px;">D: --</div>
+          <div class="detail-value" id="mTdsCalc" style="font-size:12px;">C: --</div>
+          <div class="detail-value"><span id="mTdsStatus" class="status-badge">--</span></div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">&#x1F4B3; ROUND OFF (AC)</div>
+          <div class="detail-value" id="mRoundOff">--</div>
+          <div class="detail-value"><span id="mRoundStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row" style="background: #fff5eb; color: #c05621; font-weight: 800;">
+          <div class="detail-label" style="background: transparent;">&#x1F4B0; TOTAL W/ TAX (AD)</div>
+          <div class="detail-value" id="mWithTax">--</div>
+          <div class="detail-value"><span id="mWithTaxStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">&#x1F534; DIFF (PORTAL CL)</div>
+          <div class="detail-value" id="mDiff">--</div>
+          <div class="detail-value"><span id="mDiffStatus" class="status-badge">--</span></div>
+        </div>
+        <div class="detail-row" style="background: #2d3748; color: white; border-bottom: none;">
+          <div class="detail-label" style="background: transparent; color: white;">&#x1F6E0;&#xFE0F; OVERALL STATUS</div>
+          <div class="detail-value" id="mOverall" style="font-weight: 800; color: #2ecc71;">--</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 14px; padding: 14px; border: 1px solid #dbe4ef; border-radius: 12px; background: #f8fafc;">
+        <div style="font-size: 13px; font-weight: 800; color: #475569; margin-bottom: 8px;">Rename PDF ZIP With Seller Name</div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="file" id="ajioBillZipInput" accept=".zip" style="flex:1; min-width:220px; padding:8px; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
+          <button id="ajioBillZipBtn" class="modal-btn" style="background:#dbeafe; border:1px solid #3b82f6;">UPLOAD & DOWNLOAD ZIP</button>
+        </div>
+        <div id="ajioBillZipStatus" style="margin-top:8px; font-size:12px; color:#64748b;">PDF name format: Old Name Seller Name.pdf</div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnRestartBill" class="modal-btn" style="background: #e0e0e0; border: 1px solid #999;">RESTART</button>
+        <button id="btnPrevBill" class="modal-btn" style="background: #eee; border: 1px solid #ccc;">PREV</button>
+        <button id="btnNextBill" class="modal-btn" style="background: #c6efce; border: 1px solid #28a745;">NEXT</button>
+        <button id="btnAutoBill" class="modal-btn" style="background: #c6f0ff; border: 1px solid #007bff;">AUTO</button>
+        <button id="btnStopBill" class="modal-btn" style="background: #ffd6d6; border: 1px solid #dc3545;">STOP</button>
+        <button id="btnCloseModal" class="modal-btn" style="background: #eee; border: 1px solid #ccc;">CLOSE</button>
+        <button id="closePurchaseModal" class="modal-btn" style="display:none;"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/api_shared.js"></script>
+  <script src="../../assets/insights_charts.js"></script>
+  <script src="../../amazon/INVOICE/jszip.min.js"></script>
+  <script src="../../assets/timer.js"></script>
+  <script src="ajio_modal.js"></script>
+  <script src="ajio.js"></script>
+  <script src="portal.js"></script>
+  <script src="sale.js"></script>
+  <script src="purchase.js"></script>
+  <script src="../../assets/chatbot.js"></script>
+</body>

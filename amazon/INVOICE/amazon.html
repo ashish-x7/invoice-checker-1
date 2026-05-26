@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Invoice Dashboard</title>
+  <script src="../../assets/web_chrome_compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="../../assets/upload_modal.css">
+  <link rel="stylesheet" href="../../assets/insights.css">
+  <link rel="stylesheet" href="../../assets/chatbot.css">
+  <style>
+    :root {
+      --primary: #ff9900; /* Amazon Orange */
+      --primary-hover: #e68a00;
+      --bg-light: #f8fafc;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --surface: #ffffff;
+    }
+
+    * { box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+    body { margin: 0; background-color: var(--bg-light); color: var(--text-main); }
+
+    /* Header & Tabs */
+    .header {
+      background: #fff;
+      padding: 15px 30px;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 5px;
+    }
+    .brand-logo-img {
+      height: 45px;
+      width: auto;
+    }
+    .brand-text-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .brand-main-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .brand-divider-line {
+      width: 100%;
+      height: 1.2px;
+      background-color: #1e293b;
+      margin: 2px 0;
+    }
+    .brand-sub-text {
+      font-size: 10px;
+      font-weight: 500;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    
+    .tabs-row { display: flex; width: 100%; justify-content: space-between; align-items: center; }
+    .tabs { display: flex; gap: 10px; align-items: center; }
+    .portal-summary-group { display: none; gap: 12px; align-items: center; }
+    .summary-box {
+        font-size: 12px;
+        font-weight: 700;
+        background: #fff;
+        padding: 5px 12px;
+        border-radius: 8px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .tab-btn {
+      padding: 10px 25px;
+      border: none;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(255, 153, 0, 0.2); }
+    .tab-btn:hover:not(.active) { background: #e2e8f0; }
+
+    /* Toolbar */
+    .top-toolbar {
+      background: #fff;
+      padding: 12px 30px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .toolbar-label { font-weight: 800; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .toolbar-btn {
+      padding: 6px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.1) !important;
+      background: rgba(255, 255, 255, 0.4) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      font-size: 11px;
+      font-weight: 500 !important;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #334155 !important;
+    }
+    .toolbar-btn:hover { background: rgba(248, 250, 252, 0.7) !important; border-color: #cbd5e1 !important; transform: translateY(-1px); }
+    .glass-green {
+      background: rgba(16, 185, 129, 0.12) !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      color: #065f46 !important;
+      padding: 8px 14px !important;
+      border-radius: 999px !important;
+      min-width: unset !important;
+      white-space: nowrap !important;
+      box-shadow: 0 8px 18px rgba(16,185,129,0.08) !important;
+    }
+    .glass-green:hover {
+      background: rgba(16, 185, 129, 0.18) !important;
+    }
+    .btn-primary { 
+      background: rgba(255, 153, 0, 0.15) !important; 
+      color: #e67e00 !important; 
+      border: 1px solid rgba(255, 153, 0, 0.3) !important; 
+      font-weight: 500 !important;
+    }
+    .btn-primary:hover { background: rgba(255, 153, 0, 0.25) !important; }
+
+    /* Search & Stats */
+    .inline-search {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 4px 12px;
+        border: 1px solid var(--border);
+        width: 300px;
+    }
+    .inline-search input {
+        border: none;
+        background: transparent;
+        padding: 6px;
+        font-size: 13px;
+        outline: none;
+        width: 100%;
+        font-weight: 500;
+    }
+    .search-col-select {
+        border: none;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--primary);
+        outline: none;
+        cursor: pointer;
+        max-width: 140px;
+        border-right: 1px solid var(--border);
+        margin-right: 8px;
+        padding-right: 5px;
+        text-transform: uppercase;
+    }
+
+    /* Table Styles */
+    #tableContainer { padding: 20px 30px; overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    
+    thead { position: sticky; top: 0; z-index: 100; }
+    
+    th { background: #f8fafc; padding: 14px 18px; text-align: left; font-size: 11px; font-weight: 800; color: #64748b; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; position: sticky; top: 0; }
+    
+    td { padding: 10px 18px; font-size: 13px; color: #334155; border-bottom: 1px solid #f1f5f9; font-weight: 500; white-space: nowrap; vertical-align: middle; }
+    
+    /* Freeze first column (Row Index) */
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 50;
+        background-color: #f8fafc !important;
+        border-right: 2px solid #e2e8f0 !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+    
+    /* Intersection of sticky header and sticky column */
+    thead th:first-child {
+        z-index: 150;
+        left: 0;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 153, 0, 0.05) !important; }
+    tr:hover .sticky-col { background: #f1f5f9 !important; }
+
+    /* Layout fix for frozen headers */
+    body { 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh; 
+      margin: 0; 
+      overflow: hidden; 
+      background: #f8fafc;
+    }
+    .header, .top-toolbar { flex-shrink: 0; background: white; z-index: 200; }
+    #tableContainer { flex: 1; overflow: auto; padding: 0 30px 20px 30px; }
+    #paginationControls { flex-shrink: 0; padding: 15px 30px; background: white; border-top: 1px solid var(--border); margin: 0; z-index: 100; }
+
+    /* Dropdown Actions */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      min-width: 180px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      padding: 6px;
+      transform-origin: top right;
+    }
+    .dropdown.active .dropdown-content {
+      display: block;
+      animation: dropdownKeyframes 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes dropdownKeyframes {
+      from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .dropdown-item {
+      color: #334155;
+      padding: 10px 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+    .dropdown-item.clear-danger { color: #ef4444; }
+    .dropdown-item.clear-danger:hover { background: #fef2f2; }
+
+    /* Pagination Styles */
+    .page-block { 
+      padding: 8px 14px; 
+      border-radius: 10px; 
+      background: rgba(241, 245, 249, 0.4); 
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(0,0,0,0.05);
+      color: #64748b; 
+      font-weight: 500; 
+      cursor: pointer; 
+      font-size: 13px; 
+      transition: all 0.2s; 
+      min-width: 40px; 
+      text-align: center; 
+    }
+    .page-block.active { 
+      background: rgba(255, 153, 0, 0.15); 
+      color: var(--primary); 
+      box-shadow: 0 4px 12px rgba(255, 153, 0, 0.1); 
+      border-color: rgba(255, 153, 0, 0.3);
+    }
+    .page-block:hover:not(.active) { background: rgba(226, 232, 240, 0.6); }
+    .page-ellipsis { color: #94a3b8; padding: 0 5px; font-weight: 500; display: flex; align-items: center; }
+    .disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    /* New Pagination Elements */
+    .pagination-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 20px; }
+    .pg-left, .pg-right { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #64748b; }
+    .pg-center { display: flex; align-items: center; gap: 5px; }
+
+    .pg-select, .pg-input { 
+        padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; 
+        font-weight: 700; color: var(--text-main); outline: none; background: #fff;
+    }
+    .pg-input { width: 60px; text-align: center; }
+    .pg-select:focus, .pg-input:focus { border-color: var(--primary); }
+    
+    .pg-btn {
+        background: rgba(51, 65, 85, 0.1); 
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: #334155; 
+        border: 1px solid rgba(51, 65, 85, 0.2); 
+        padding: 8px 16px; 
+        border-radius: 10px; 
+        cursor: pointer; 
+        font-weight: 500; 
+        transition: all 0.2s;
+    }
+    .pg-btn:hover { background: rgba(51, 65, 85, 0.2); transform: translateY(-1px); }
+    
+    .pg-nav-btn {
+        padding: 10px; 
+        background: rgba(248, 250, 252, 0.4); 
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid var(--border);
+        border-radius: 10px; 
+        color: #64748b; 
+        font-weight: 500; 
+        cursor: pointer; 
+        min-width: 40px;
+    }
+    .pg-nav-btn:hover:not(.disabled) { background: rgba(241, 245, 249, 0.7); border-color: #adb5bd; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Modals */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 40px; border-radius: 24px; width: 850px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); position: relative; border: 1px solid rgba(0,0,0,0.05); }
+    .modal-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; gap: 12px; }
+    .modal-title { font-size: 28px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; text-transform: uppercase; }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 5px;
+    }
+    .brand-logo-img {
+      height: 45px;
+      width: auto;
+    }
+    .brand-text-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .brand-main-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .brand-divider-line {
+      width: 100%;
+      height: 1.2px;
+      background-color: #1e293b;
+      margin: 2px 0;
+    }
+    .brand-sub-text {
+      font-size: 10px;
+      font-weight: 500;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    .close-modal { position: absolute; top: 25px; right: 30px; font-size: 28px; cursor: pointer; color: #94a3b8; transition: all 0.2s; }
+    .close-modal:hover { color: #f43f5e; transform: rotate(90deg); }
+
+    .upload-box { border: 2px dashed #cbd5e1; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 20px; transition: all 0.2s; background: #f8fafc; }
+    .upload-box:hover { border-color: var(--primary); background: #fff7ed; }
+    .upload-label { display: block; font-weight: 700; color: #475569; margin-bottom: 10px; cursor: pointer; }
+
+    /* Purchase Info Banner */
+    #purchaseInfoBanner {
+        display: none;
+        background: #fff;
+        margin: 10px 30px;
+        padding: 15px 25px;
+        border-radius: 12px;
+        border-left: 5px solid var(--primary);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        font-family: 'Outfit', sans-serif;
+    }
+    .p-banner-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .p-banner-item { display: flex; flex-direction: column; gap: 4px; }
+    .p-banner-label { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .p-banner-value { font-size: 14px; color: #1e293b; font-weight: 700; }
+    .p-total-box { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; gap: 30px; }
+    .p-total-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569; }
+    .p-total-val { color: var(--primary); font-size: 15px; font-weight: 800; }
+    
+    #saleInfoBanner {
+        display: none;
+        background: #fff;
+        margin: 10px 30px;
+        padding: 15px 25px;
+        border-radius: 12px;
+        border-left: 5px solid #8e44ad;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        font-family: 'Outfit', sans-serif;
+    }
+    .s-banner-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .s-banner-item { display: flex; flex-direction: column; gap: 4px; }
+    .s-banner-label { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .s-banner-value { font-size: 14px; color: #1e293b; font-weight: 700; }
+    .s-total-box { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; gap: 30px; }
+    .s-total-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569; }
+    .s-total-val { color: #8e44ad; font-size: 15px; font-weight: 800; }
+
+    /* File Manager Cards */
+    .fm-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .fm-card { 
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; 
+        display: flex; flex-direction: column; gap: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative; overflow: hidden;
+    }
+    .fm-card:hover { border-color: #94a3b8; transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
+    .fm-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; }
+    .fm-title { font-size: 16px; font-weight: 800; color: #1e293b; letter-spacing: 0.5px; }
+    
+    .fm-body { display: flex; flex-direction: column; gap: 12px; }
+    .fm-row { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #64748b; }
+    .fm-input { 
+        font-size: 12px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; 
+        background: #f8fafc; cursor: pointer; transition: all 0.2s;
+    }
+    .fm-input:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    
+    .fm-btn { 
+        padding: 8px 18px; 
+        border-radius: 12px; 
+        font-size: 13px; 
+        font-weight: 500; 
+        border: 1px solid transparent; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    .fm-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .btn-portal { background: rgba(51, 65, 85, 0.12); color: #334155; border-color: rgba(51, 65, 85, 0.25); }
+    .btn-purchase { background: rgba(16, 185, 129, 0.12); color: #059669; border-color: rgba(16, 185, 129, 0.25); }
+    .btn-sale { background: rgba(139, 92, 246, 0.12); color: #7c3aed; border-color: rgba(139, 92, 246, 0.25); }
+    .btn-vendor { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border-color: rgba(245, 158, 11, 0.25); }
+
+    .fm-status { font-size: 12px; font-weight: 800; transition: all 0.3s; padding: 4px 10px; border-radius: 20px; background: #f1f5f9; min-width: 80px; text-align: center; }
+    .status-success { color: #059669; background: #ecfdf5; border: 1px solid #10b981; }
+    .status-error { color: #dc2626; background: #fef2f2; border: 1px solid #ef4444; }
+
+    .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; }
+    .btn-close-fm { 
+      background: rgba(241, 245, 249, 0.4); 
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #475569; 
+      padding: 8px 25px; 
+      border-radius: 12px; 
+      font-weight: 500; 
+      cursor: pointer; 
+      border: 1px solid rgba(226, 232, 240, 0.8); 
+      transition: all 0.2s ease;
+    }
+    .btn-close-fm:hover { background: rgba(226, 232, 240, 0.7); transform: translateY(-1px); }
+
+    /* Modern Invoice Details Modal Styles */
+    #invoiceDetailsModal, #saleDetailsModal {
+        display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+        background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); justify-content: center; align-items: center;
+        animation: fadeIn 0.3s ease;
+    }
+    .id-modal-content {
+        background: #ffffff; width: 95%; max-width: 1200px; padding: 0; border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; font-family: 'Outfit', sans-serif;
+        overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .id-modal-inner { padding: 40px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); min-height: 500px; position: relative; }
+    
+    .id-watermark {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg);
+        opacity: 0.05; pointer-events: none; z-index: 0;
+    }
+    .id-watermark img { width: 500px; }
+    
+    .id-content-wrapper { position: relative; z-index: 1; }
+    .id-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-weight: 700; color: #1e293b; font-size: 16px; }
+    .id-header-row span { color: #64748b; font-weight: 500; }
+
+    .id-sep { margin: 25px 0; border-bottom: 1.5px solid #f1f5f9; }
+    .id-main-grid { display: grid; grid-template-columns: 1fr 1fr 280px; gap: 30px; }
+    
+    .id-data-table { width: 100%; font-size: 14px; font-weight: 600; color: #334155; border-collapse: collapse; }
+    .id-data-table th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .id-data-table td { padding: 12px 15px; vertical-align: middle; border-bottom: 1px solid #f8fafc; }
+    .id-data-table tr:last-child td { border-bottom: none; }
+    
+    /* Pill Badges */
+    .id-status-badge {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px;
+        font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-true { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-false { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-pending { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+    .id-logo-box { 
+        background: #ffffff; padding: 25px; border-radius: 20px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9;
+        display: flex; flex-direction: column; align-items: center; gap: 15px; justify-content: center;
+    }
+    
+    .id-footer { background: #f8fafc; padding: 20px 40px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; }
+    .btn-id-ok { 
+        background: rgba(255, 153, 0, 0.15); 
+        color: var(--primary); 
+        border: 1px solid rgba(255, 153, 0, 0.3); 
+        padding: 10px 45px; 
+        border-radius: 15px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-weight: 500; 
+        cursor: pointer; 
+        transition: all 0.3s; 
+    }
+    .btn-id-ok:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 153, 0, 0.1); filter: brightness(1.1); }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+  /* Warning Modal Styles */
+.warning-modal-content {
+    background: white;
+    width: 450px;
+    border-radius: 20px;
+    padding: 0;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    border: 3px solid #ef4444;
+}
+.warning-header {
+    background: #ef4444;
+    color: white;
+    padding: 20px;
+    font-weight: 800;
+    font-size: 18px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+.warning-body {
+    padding: 30px;
+    color: #1f2937;
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
+}
+.btn-warning-ok {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+}
+.btn-warning-ok:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+/* COLUMN FILTER STYLES */
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.filter-trigger {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #718096;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.filter-trigger:hover {
+  background: rgba(0,0,0,0.05);
+  color: #2d3748;
+}
+.filter-trigger.active {
+  color: var(--primary);
+  background: rgba(255, 153, 0, 0.1);
+}
+
+/* Vendor Widget CSS (Amazon/Orange) */
+.filter-active-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: #fff7ed;
+    border: 1px solid #ff990033;
+    color: #ff9900;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+.clear-filter-x {
+    cursor: pointer;
+    padding: 0 4px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #ef4444;
+}
+
+.vendor-search-container {
+  margin-bottom: 15px;
+  position: relative;
+}
+.vendor-search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s;
+}
+.vendor-search-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.1); }
+
+.vendor-list-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+.vendor-list-scroll::-webkit-scrollbar { width: 5px; }
+.vendor-list-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.vendor-list-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.vendor-item {
+  display: grid;
+  grid-template-columns: 35px 1fr 120px;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.vendor-item:hover { 
+  background: #fff7ed; 
+  border-color: #ff990044;
+  transform: translateX(3px);
+}
+.v-rank { font-weight: 800; color: #94a3b8; font-size: 13px; }
+.v-info { display: flex; flex-direction: column; gap: 2px; }
+.v-name { font-weight: 700; color: #1e293b; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+.v-stats { font-size: 11px; color: #64748b; font-weight: 600; }
+.v-value-box { text-align: right; }
+.v-value { font-weight: 800; color: #0f172a; font-size: 14px; }
+.v-bar-wrap { height: 4px; background: #f1f5f9; border-radius: 2px; margin-top: 6px; overflow: hidden; width: 100%; }
+.v-bar-fill { height: 100%; background: var(--primary); border-radius: 2px; width: 0%; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.filter-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  width: 260px;
+  z-index: 5000;
+  font-family: inherit;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.filter-menu-header {
+  padding: 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-search-container {
+  margin-top: 8px;
+  position: relative;
+}
+
+.filter-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.filter-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.filter-options-list {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.filter-option {
+  padding: 6px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 13px;
+  color: #334155;
+}
+
+.filter-option:hover {
+  background: #f1f5f9;
+}
+
+.filter-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.filter-menu-footer {
+  padding: 10px 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.filter-btn-apply {
+  background: #ff9900;
+  color: white;
+}
+
+.filter-btn-clear {
+  background: white;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.sort-options {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sort-btn {
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sort-btn:hover {
+  background: #f1f5f9;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <div class="brand-container">
+      <img src="../../assets/logo.png" class="brand-logo-img" alt="Logo">
+      <div class="brand-text-stack">
+        <div class="brand-main-text">Brand Central</div>
+        <div class="brand-divider-line"></div>
+        <div class="brand-sub-text">Ecommerce Growth Accelerator</div>
+      </div>
+    </div>
+    <div id="userNicknameContainer"></div>
+    <div id="globalActionHost" style="display:none;"></div>
+  </div>
+  <div class="tabs-row">
+    <div class="tabs">
+      <button id="tabPortalBtn" class="tab-btn active">PORTAL</button>
+      <button id="tabPurchaseBtn" class="tab-btn">PURCHASE</button>
+      <button id="tabSaleBtn" class="tab-btn">SALE</button>
+      <button id="tabVendorBtn" class="tab-btn">VENDOR CENTRAL</button>
+      <button id="tabSavedLinksBtn" class="tab-btn" style="color: #6366f1;">MAIL 📧</button>
+      <button id="tabReportBtn" class="tab-btn" style="color: #06b6d4;">REPORT 📊</button>
+    </div>
+  </div>
+  <!-- Dedicated Summary Row -->
+  <div id="portal-summary-header" class="portal-summary-group" style="display: none; margin-top: 10px; width: 100%; border-top: 1px solid #eee; padding-top: 10px;">
+     <div id="totalQtyBox" class="summary-box" style="border: 2px solid #3498db; color: #3498db;">Total Qty: 0</div>
+     <div id="totalNetBox" class="summary-box" style="border: 2px solid #e67e22; color: #e67e22;">Total Without Tax: ₹ 0.00</div>
+     <div id="totalGrandBox" class="summary-box" style="border: 2px solid #2ecc71; color: #2ecc71;">Total With Tax: ₹ 0.00</div>
+     <div id="totalNetGrandBox" class="summary-box" style="border: 2px solid #27ae60; color: #27ae60;">Net Grand: ₹ 0.00</div>
+     <div id="totalRoundOffBox" class="summary-box" style="border: 2px solid #7f8c8d; color: #7f8c8d;">Round Off: ₹ 0.00</div>
+     <div id="totalPortalCgstBox" class="summary-box" style="border: 2px solid #8e44ad; color: #8e44ad;">Total CGST: ₹ 0.00</div>
+     <div id="totalPortalSgstBox" class="summary-box" style="border: 2px solid #9b59b6; color: #9b59b6;">Total SGST: ₹ 0.00</div>
+  </div>
+</div>
+
+<div id="topToolbar" class="top-toolbar">
+       <div class="toolbar-label">
+         <img src="https://img.icons8.com/ios-filled/24/64748b/settings.png" alt="settings" style="width: 16px;"> TOOLS:
+       </div>
+       <button id="openUploadModalBtn" class="toolbar-btn btn-primary">AMAZON DATA CENTER 📂</button>
+       
+       <button id="invoiceDetailsBtnHeader" class="toolbar-btn">BILL DETAILS 🎁</button>
+       <button id="saleDetailsBtnHeader" class="toolbar-btn">INVOICE DETAILS 📈</button>
+       <button id="vendorDetailsBtnHeader" class="toolbar-btn">VC DETAILS 🚚</button>
+
+       <!-- Actions Dropdown -->
+       <div class="dropdown" id="actionsDropdown">
+          <button class="toolbar-btn" id="actionsToggleBtn" style="position: relative; padding-right: 35px;">
+             ACTIONS ⚡
+             <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 8px;">▼</span>
+          </button>
+          <div class="dropdown-content">
+             <div class="dropdown-item" id="formulaBtn">
+                <span>📝</span> SHOW FORMULAS
+             </div>
+             <div class="dropdown-item" id="syncSaleBtn">
+                <span>✅</span> GST MATCH
+             </div>
+             <div style="border-top: 1px solid #f1f5f9; margin: 4px 0;"></div>
+             <div class="dropdown-item clear-danger" id="clearBtn">
+                <span>🗑️</span> CLEAR DATA
+             </div>
+          </div>
+       </div>
+  
+  <button id="sendToGoogleSheetBtn" class="toolbar-btn glass-green">Push Details 🚀</button>
+  <span id="pushStatus" style="font-size: 12px; font-weight: 800; color: #10b981; margin-left: 10px; opacity: 0; transition: all 0.3s; pointer-events: none;">DONE ✅</span>
+  <button id="dataUploadBtn" class="toolbar-btn glass-blue" style="margin-left: 10px;">DATA UPLOAD 📤</button>
+
+
+  <div id="headerRightSection" style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+    <div id="apiTrackerHeader" title="Click to check remaining limit" style="font-size: 11px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 7px 14px; border-radius: 6px; cursor: pointer; border: 1px solid #e2e8f0;">
+      Remaining API Call : <span id="apiCountDisplay">***</span>
+    </div>
+    <div class="inline-search" style="width: 450px;">
+        <select id="searchColSelect" class="search-col-select">
+            <option value="-1">All Columns</option>
+        </select>
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search Data...">
+    </div>
+    <div id="tableInfoBox" style="font-size: 13px; font-weight: 700; background: #fff; padding: 6px 15px; border: 2px solid var(--primary); border-radius: 10px; color: var(--primary); min-width: 100px; text-align: center;">0 Rows</div>
+  </div>
+</div>
+
+<div id="portalInfoBanner" style="display:none;">
+    <div class="p-banner-grid">
+        <div class="p-banner-item"><span class="p-banner-label">Seller Name</span><span id="port-seller" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">GSTIN</span><span id="port-gstin" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Invoice Date</span><span id="port-inv-date" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Status</span><span id="port-status" class="p-banner-value">-</span></div>
+    </div>
+</div>
+
+<div id="purchaseInfoBanner" style="display:none;">
+    <div class="p-banner-grid">
+        <div class="p-banner-item"><span class="p-banner-label">Seller Name</span><span id="p-seller" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Seller Code</span><span id="p-seller-code" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">GSTIN</span><span id="p-gstin" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Invoice Date</span><span id="p-date" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Invoice No</span><span id="p-inv" class="p-banner-value">-</span></div>
+    </div>
+    <div class="p-total-box">
+        <div class="p-total-item">Total Qty: <span id="p-total-qty" class="p-total-val">0</span></div>
+        <div class="p-total-item">Net Amt: <span id="p-total-net" class="p-total-val">0.00</span></div>
+        <div class="p-total-item">CGST: <span id="p-total-cgst" class="p-total-val">0.00</span></div>
+        <div class="p-total-item">SGST: <span id="p-total-sgst" class="p-total-val">0.00</span></div>
+        <div class="p-total-item">Grand Total: <span id="p-total-grand" class="p-total-val">0.00</span></div>
+        <div class="p-total-item">TDS (0.1%): <span id="p-total-tds" class="p-total-val">0.00</span></div>
+        <div class="p-total-item">With Tax: <span id="p-total-with-tax" class="p-total-val" style="color:#e67e22">0</span></div>
+    </div>
+</div>
+
+<div id="saleInfoBanner" style="display:none;">
+    <div class="s-banner-grid">
+        <div class="s-banner-item"><span class="s-banner-label">Seller Name</span><span id="s-seller" class="s-banner-value">-</span></div>
+        <div class="s-banner-item"><span class="s-banner-label">GSTIN</span><span id="s-gstin" class="s-banner-value">-</span></div>
+        <div class="s-banner-item"><span class="s-banner-label">Invoice Date</span><span id="s-date" class="s-banner-value">-</span></div>
+        <div class="s-banner-item"><span class="s-banner-label">Invoice ID</span><span id="s-inv-id-banner" class="s-banner-value">-</span></div>
+        <div class="s-banner-item"><span class="s-banner-label">Invoice No</span><span id="s-inv" class="s-banner-value">-</span></div>
+    </div>
+    <div class="s-total-box">
+        <div class="s-total-item">Total Qty: <span id="s-total-qty" class="s-total-val">0</span></div>
+        <div class="s-total-item">Net Amt: <span id="s-total-net" class="s-total-val">0.00</span></div>
+        <div class="s-total-item">CGST: <span id="s-total-cgst" class="s-total-val">0.00</span></div>
+        <div class="s-total-item">SGST: <span id="s-total-sgst" class="s-total-val">0.00</span></div>
+        <div class="s-total-item">Grand Total (Exact): <span id="s-total-exact" class="s-total-val">0.00</span></div>
+        <div class="s-total-item">Net Grand: <span id="s-total-grand" class="s-total-val">0.00</span></div>
+        <div class="s-total-item">Round Off: <span id="s-total-roundoff" class="s-total-val">0.00</span></div>
+    </div>
+</div>
+
+<div id="vendorInfoBanner" style="display:none; background: #fff; margin: 10px 30px; padding: 15px 25px; border-radius: 12px; border-left: 5px solid #e67e22; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Outfit', sans-serif;">
+    <div class="p-banner-grid">
+        <div class="p-banner-item"><span class="p-banner-label">Seller Name</span><span id="v-seller" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">GSTIN</span><span id="v-gstin" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Invoice Date</span><span id="v-inv-date" class="p-banner-value">-</span></div>
+        <div class="p-banner-item"><span class="p-banner-label">Invoice No</span><span id="v-inv-no" class="p-banner-value">-</span></div>
+    </div>
+    <div class="p-total-box" style="border-top: 1px dashed #e2e8f0; margin-top: 10px; padding-top: 10px; display: flex; gap: 30px;">
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">Total Qty: <span id="v-total-qty" style="color: #e67e22; font-size: 15px; font-weight: 800;">0</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">Net Amt: <span id="v-total-net" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">CGST: <span id="v-total-cgst" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">SGST: <span id="v-total-sgst" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">Exact Total: <span id="v-total-exact" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">Net Grand: <span id="v-total-grand" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+        <div class="p-total-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #475569;">Round Off: <span id="v-total-round" style="color: #e67e22; font-size: 15px; font-weight: 800;">0.00</span></div>
+    </div>
+</div>
+
+</div>
+
+<div id="savedLinksContainer" style="display:none; padding: 20px 30px;">
+    <div style="background: #fff; padding: 25px; border-radius: 12px; border-top: 5px solid #6366f1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Outfit', sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="font-size: 18px; font-weight: 800; color: #1e293b;">📧 MAIL ARCHIVE (TRANSARY 24H)</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="mailExportBtn" class="toolbar-btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);">📦 MAIL EXPORT</button>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 5px 12px; border-radius: 20px;">Data purges every 24 hours</div>
+            </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #f1f5f9; text-align: left; font-size: 12px; color: #64748b;">
+                    <th style="padding: 12px;">INVOICE & SELLER</th>
+                    <th style="padding: 12px;">PDF LINK</th>
+                    <th style="padding: 12px;">SAVED TIME</th>
+                    <th style="padding: 12px;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="savedLinksBody">
+                <!-- Data populated via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="reportContainer" style="display: none; padding: 20px;">
+    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;">
+            <div>
+                <h2 style="color: #1e293b; margin: 0; font-size: 20px;">📊 Amazon Activity Report (Last 24h)</h2>
+                <p style="color: #64748b; margin: 5px 0 0 0; font-size: 13px;">Records are automatically cleared after 24 hours.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="exportReportBtn" class="toolbar-btn" style="background: #10b981; color: white; border: none; padding: 10px 20px; font-weight: 700;">EXPORT EXCEL 📥</button>
+                <button id="clearReportBtn" class="toolbar-btn" style="background: #ef4444; color: white; border: none; padding: 10px 20px; font-weight: 700;">CLEAR ALL 🗑️</button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 65vh;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">INVOICE ID</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">INVOICE NO.</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">INVOICE DATE</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">IRN DATE</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">QTY (S)</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">SALE AMT</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">ZOHO S</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">⭐</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">BILL ID</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">BILL NO.</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">BILL DATE</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">QTY (P)</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">PUR AMT</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">ZOHO P</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">DATE & TIME</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">REMARK</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <!-- Data populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+  <!-- QUEUE STATUS BAR -->
+  <div id="queueContainer" style="display:none; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Background Sync Queue</h3>
+        <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;">Data is being transferred to Google Sheets in the background. You can start a new batch in other tabs.</p>
+      </div>
+      <div style="display:flex; align-items: center; gap: 20px;">
+        <div style="text-align: right;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pending Rows</div>
+          <div id="queuePendingCount" style="font-size: 24px; font-weight: 800; color: #ff9900;">0</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Status</div>
+          <div id="queueWorkerStatus" style="font-size: 14px; font-weight: 700; color: #27ae60;">Idle</div>
+        </div>
+        <button id="clearQueueBtn" class="toolbar-btn" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;">Clear Queue</button>
+      </div>
+    </div>
+    <div style="margin-top: 15px; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
+        <div id="queueProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff9900, #ffcc80); transition: width 0.3s;"></div>
+    </div>
+  </div>
+
+<div id="insightsContainer" style="display:none;">
+  <div class="insights-wrap">
+    <div class="insights-header">
+      <div>
+        <div class="insights-title">Insights</div>
+        <div class="insights-subtitle" id="insightsSubtitle">Sheet: AMAZON</div>
+      </div>
+      <div class="insights-controls" style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+        <div class="insights-tabs" style="display: flex; gap: 8px; margin-bottom: 5px;">
+           <button id="insTabGlobalBtn" class="ins-tab-btn active">Platform Trends</button>
+           <button id="insTabUserBtn" class="ins-tab-btn">User Analytics</button>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select id="insightsRowLimit" class="insights-select">
+            <option value="1000" selected>Last 1000 rows</option>
+            <option value="2000">Last 2000 rows</option>
+            <option value="3500">Last 3500 rows</option>
+            <option value="5000">Last 5000 rows</option>
+          </select>
+          <button id="insightsRefreshBtn" class="insights-btn" type="button">Refresh</button>
+          <button id="insightsBackBtn" class="insights-btn" type="button">Back to Table</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="insightsStatus" class="insights-status"></div>
+
+    <!-- Platform Trends View -->
+    <div id="insGlobalView">
+      <!-- Active Filter Badge -->
+      <div id="vendorFilterBadge" class="filter-active-badge">
+        <span>Deep Dive: <b id="filteredVendorName"></b></span>
+        <span class="clear-filter-x" id="clearVendorFilterBtn" title="Clear Filter">×</span>
+      </div>
+
+      <div class="insights-grid">
+        <div class="ins-card">
+          <div class="ins-kpi-label">Rows</div>
+          <div class="ins-kpi-value" id="kpiRows">0</div>
+          <div class="ins-kpi-hint" id="kpiRowsHint">Loaded: 0</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label">Sale Total</div>
+          <div class="ins-kpi-value" id="kpiSale">0</div>
+          <div class="ins-kpi-hint">Sum of Sale Amount</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label">Purchase Total</div>
+          <div class="ins-kpi-value" id="kpiPurchase">0</div>
+          <div class="ins-kpi-hint">Sum of Purchase Amount</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label" style="color: #10b981;">ALL CLEAR</div>
+          <div class="ins-kpi-value" id="kpiAllClear">0</div>
+          <div class="ins-kpi-hint" id="kpiAllClearHint">Perfect Match</div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-kpi-label" style="color: #ef4444;">Top Issue</div>
+          <div class="ins-kpi-value" id="kpiTopRemark">-</div>
+          <div class="ins-kpi-hint" id="kpiTopRemarkHint">0 rows</div>
+        </div>
+
+        <div class="ins-panel">
+          <h3>Daily Rows</h3>
+          <canvas id="insightsLineChart"></canvas>
+        </div>
+        <div class="ins-panel">
+          <h3>Sale vs Purchase</h3>
+          <canvas id="insightsBarChart"></canvas>
+        </div>
+        <div class="ins-panel pie">
+          <h3>Remarks</h3>
+          <canvas id="insightsPieChart"></canvas>
+        </div>
+
+        <div class="ins-panel" style="grid-column: span 10; min-height: 520px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; font-size: 15px; font-weight: 800; color: #1e293b;">Amazon Vendor Performance Hub</h3>
+            <div style="width: 300px;" class="vendor-search-container">
+              <input type="text" id="vendorSearchInput" class="vendor-search-input" placeholder="Search vendor by name...">
+            </div>
+          </div>
+          
+          <!-- Visual Summary: Top 5 Stats & Donut Chart -->
+          <div style="display: flex; gap: 24px; align-items: flex-start; margin-bottom: 28px; background: rgba(248, 250, 252, 0.5); padding: 16px; border-radius: 14px;">
+            <div style="flex: 1.2;">
+              <h4 style="margin: 0 0 16px; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Market Dominance (Top 5)</h4>
+              <div id="vendorTopStats" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align:center; color: #94a3b8; font-size: 12px; padding: 20px;">Calculating share...</div>
+              </div>
+            </div>
+            <div style="flex: 1; height: 180px; position: relative;">
+              <canvas id="vendorDonutChart"></canvas>
+            </div>
+          </div>
+
+          <div id="vendorLeaderboardList" class="vendor-list-scroll" style="max-height: 320px;">
+            <div style="text-align:center; padding: 40px; color: #94a3b8; font-weight: 700;">No vendor data available</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Analytics View -->
+    <div id="insUserView" style="display: none;">
+      <div class="insights-grid">
+        <div class="ins-panel" style="grid-column: span 10;">
+          <h3 style="display:flex; justify-content: space-between;">
+             <span>Workload Productivity (Invoices vs Disputes)</span>
+             <small style="font-size: 10px; color: #64748b;">Sync attribution required</small>
+          </h3>
+          <canvas id="userProductivityChart" style="height: 300px;"></canvas>
+        </div>
+        
+        <div class="ins-panel" style="grid-column: span 10; min-height: 400px;">
+          <h3>User Performance Leaderboard</h3>
+          <div id="userLeaderboardContent" class="vendor-list-scroll" style="max-height: 400px; overflow-y: auto;">
+             <div style="text-align:center; padding: 40px; color: #94a3b8;">Attributing data...</div>
+          </div>
+        </div>
+
+        <div class="ins-panel" style="grid-column: span 10;">
+           <h3>Platform Workload Distribution</h3>
+           <div id="userPlatformWorkload" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 10px;">
+              <!-- Cards for each user showing Amazon/Ajio/Myntra splits -->
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tableContainer">
+  <div style="text-align:center; padding: 80px; color: var(--text-muted);">
+    <h3>No data available</h3>
+    <p>Click 'Upload Files 📁' above to start processing Amazon data.</p>
+  </div>
+</div>
+
+<div id="paginationControls" class="pagination-container" style="display:none;">
+    <div class="pagination-inner">
+        <div class="pg-left">
+            <span>Show</span>
+            <select id="pgSizeSelect" class="pg-select">
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="999999">ALL</option>
+            </select>
+            <span>rows</span>
+        </div>
+        
+        <div id="pageBlocks" class="pg-center"></div>
+
+        <div class="pg-right">
+            <span>Go to:</span>
+            <input type="number" id="pgJumpInput" class="pg-input" placeholder="...">
+            <button id="pgJumpBtn" class="pg-btn">Go</button>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal">
+  <div class="modal-content">
+    <div id="closeUploadModalBtn" class="close-modal">&times;</div>
+    
+    <div class="modal-header">
+      <div class="modal-title">📦 AMAZON DATA CENTER</div>
+      <div class="modal-subtitle">📂 Upload & Process Inventory Documents</div>
+    </div>
+    
+    <div class="fm-container">
+      <!-- 1. Portal Data -->
+      <div class="fm-card" style="border-left: 5px solid #34495e;">
+        <div class="fm-header">
+          <div class="fm-title" style="color: #34495e;">1. PORTAL DATA</div>
+        </div>
+        <div class="fm-body">
+          <div class="fm-row">
+            <span>Portal Excel:</span>
+            <input type="file" id="portalFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+            <span id="portalFileStatus" class="fm-status"></span>
+            <button id="processPortalBtn" class="fm-btn btn-portal">Process Portal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Purchase Data -->
+      <div class="fm-card" style="border-left: 5px solid #2ecc71;">
+        <div class="fm-header">
+          <div class="fm-title" style="color: #2ecc71;">2. PURCHASE DATA</div>
+        </div>
+        <div class="fm-body">
+          <div class="fm-row">
+            <span>Purchase Summary:</span>
+            <input type="file" id="purchaseFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <div class="fm-row">
+            <span>Purchase Details:</span>
+            <input type="file" id="purchaseDetailFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <span id="purchaseDetailFileStatus" class="fm-status" style="display:none;"></span>
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+            <span id="purchaseFileStatus" class="fm-status"></span>
+            <button id="processPurchaseBtn" class="fm-btn btn-purchase">Process Purchase</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Sale Data -->
+      <div class="fm-card" style="border-left: 5px solid #8e44ad;">
+        <div class="fm-header">
+          <div class="fm-title" style="color: #8e44ad;">3. SALE DATA</div>
+        </div>
+        <div class="fm-body">
+          <div class="fm-row">
+            <span>Sale Details:</span>
+            <input type="file" id="saleDetailFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <div class="fm-row">
+            <span>Sale Summary:</span>
+            <input type="file" id="saleSummaryFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+            <span id="saleFileStatus" class="fm-status"></span>
+            <button id="processSaleBtn" class="fm-btn btn-sale">Process Sale</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Vendor Central -->
+      <div class="fm-card" style="border-left: 5px solid #e67e22;">
+        <div class="fm-header">
+          <div class="fm-title" style="color: #e67e22;">4. VENDOR CENTRAL</div>
+        </div>
+        <div class="fm-body">
+          <div class="fm-row">
+            <span>Vendor Excel:</span>
+            <input type="file" id="vendorFile" class="fm-input" accept=".xlsx, .xls, .csv">
+          </div>
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+            <span id="vendorFileStatus" class="fm-status"></span>
+            <button id="processVendorBtn" class="fm-btn btn-vendor">Process Vendor</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+        <button id="closeFmBtn" class="btn-close-fm">CLOSE</button>
+    </div>
+  </div>
+</div>
+<!-- Invoice Details Modal -->
+<div id="invoiceDetailsModal" class="modal">
+  <div class="id-modal-content">
+    <div class="id-modal-inner">
+       <div class="id-watermark"><img src="amazon logo.png" alt="watermark"></div>
+       <div class="id-content-wrapper">
+          <div class="id-header-row">🏢 PURCHASE BILL DETAILS</div>
+          <div class="id-header-row">🗄️ SELLER CODE: <span id="id-seller-code">-</span></div>
+          <div class="id-header-row">🧾 INVOICE NO.: <span id="id-inv-no">-</span></div>
+          <div class="id-header-row">🗓️ INVOICE DATE: <span id="id-inv-date">-</span></div>
+          <div class="id-main-grid">
+             <!-- Left Column: Bill Component -->
+             <div class="id-left-section">
+                <table class="id-data-table">
+                   <thead>
+                      <tr>
+                         <th>BILL COMPONENT</th>
+                         <th style="width: 140px;">AMOUNT</th>
+                         <th style="width: 100px; text-align: right;">MATCH</th>
+                      </tr>
+                   </thead>
+                   <tbody>
+                      <tr><td>💵 TOTAL WITHOUT TAX</td><td id="id-amt-net">₹ 0.00</td><td style="text-align: right;"><span id="id-stat-net" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>📦 QUANTITY</td><td id="id-amt-qty">0</td><td style="text-align: right;"><span id="id-stat-qty" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>🚛 TOTAL CGST</td><td id="id-amt-cgst">₹ 0.00</td><td style="text-align: right;"><span id="id-stat-cgst" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>🚛 TOTAL SGST</td><td id="id-amt-sgst">₹ 0.00</td><td style="text-align: right;"><span id="id-stat-sgst" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>💸 TDS 0.1%</td><td id="id-amt-tds">₹ 0.00</td><td style="text-align: right;"><span class="id-status-badge badge-pending">-</span></td></tr>
+                      <tr><td>🔄 ROUND OFF</td><td id="id-amt-round">₹ 0.00</td><td style="text-align: right;"><span class="id-status-badge badge-pending">-</span></td></tr>
+                      <tr style="background: #f8fafc; border-radius: 10px;"><td style="font-weight: 800;">💰 TOTAL WITH TAX</td><td id="id-amt-grand" style="font-size: 16px; font-weight: 800; color: var(--primary);">₹ 0.00</td><td style="text-align: right;"><span id="id-stat-diff-grand" class="id-status-badge badge-pending">OK</span></td></tr>
+                   </tbody>
+                </table>
+             </div>
+
+             <!-- Middle Column: Price Difference -->
+             <div class="id-mid-section">
+                <div class="id-header-row" style="color: #64748b; font-size: 14px;">🔭 PRICE DIFFERENCE (PORTAL-PURCHASE)</div>
+                <table class="id-data-table" style="margin-top: 15px;">
+                    <thead>
+                        <tr>
+                            <th>ITEM</th>
+                            <th style="width: 120px;">VALUE</th>
+                            <th style="width: 80px; text-align: right;">MATCH</th>
+                        </tr>
+                    </thead>
+                   <tbody>
+                      <tr><td>🏢 PRICE/QTY</td><td id="id-diff-val-price-qty">-</td><td style="text-align: right;"><span id="id-stat-price-qty" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>🏢 NET AMT</td><td id="id-diff-val-net">-</td><td style="text-align: right;"><span id="id-stat-diff-net" class="id-status-badge badge-pending">OK</span></td></tr>
+                      <tr><td>🏢 GRAND TTL</td><td id="id-diff-val-grand">-</td><td style="text-align: right;"><span id="id-stat-diff-grand-actual" class="id-status-badge badge-pending">OK</span></td></tr>
+                   </tbody>
+                </table>
+             </div>
+
+             <!-- Right Column: Audit/Logo Box -->
+             <div class="id-right-section">
+                <div class="id-logo-box">
+                   <img src="amazon logo.png" alt="Logo" style="max-height: 80px; width: auto;">
+                   <div style="text-align: center; color: #64748b; font-size: 12px; font-weight: 700;">AMAZON INDIA AUDIT</div>
+                </div>
+             </div>
+          </div>
+          <!-- PDF Management Section (Purchase Modal) -->
+          <div style="padding: 15px 25px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; margin-top: 20px;">
+            <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">📑 PDF ARCHIVE MANAGEMENT</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="purPdfLinkInput" placeholder="Paste Purchase PDF Link here..." style="flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; outline: none; transition: border 0.2s;">
+                <button id="purPdfExportBtn" style="padding: 10px 20px; background: #ff9900; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s;">PDF EXPORT 📤</button>
+                <span id="purPdfStatus" style="font-size: 11px; font-weight: 800; color: #10b981; opacity: 0; transition: all 0.3s; pointer-events: none;">DONE ✅</span>
+            </div>
+          </div>
+       </div>
+    </div>
+    <div class="id-footer">
+        <button id="closeIdBtn" class="btn-id-ok">CLOSE</button>
+    </div>
+  </div>
+</div>
+   
+<!-- Sale Details Modal -->
+   <div id="saleDetailsModal" class="modal">
+     <div class="id-modal-content">
+       <div class="id-modal-inner">
+          <div class="id-watermark"><img src="amazon logo.png" alt="watermark"></div>
+          <div class="id-content-wrapper">
+             <div class="id-header-row">🛒 INVOICE DETAILS</div>
+             <div class="id-header-row">🗄️ SELLER CODE: <span id="s-det-seller-code">-</span></div>
+             <div class="id-header-row">🧾 INVOICE NO.: <span id="s-det-inv-no">-</span></div>
+             <div class="id-header-row">🆔 INVOICE ID: <span id="s-det-inv-id">-</span></div>
+             <div class="id-header-row">🗓️ INVOICE DATE: <span id="s-det-inv-date">-</span></div>
+             
+             <div class="id-sep"></div>
+   
+             <div class="id-main-grid">
+                <div class="id-left-section">
+                    <table class="id-data-table">
+                       <thead>
+                          <tr>
+                             <th>SALE COMPONENT</th>
+                             <th style="width: 160px;">PORTAL</th>
+                             <th style="width: 160px;">SALE</th>
+                             <th style="width: 130px; text-align: right;">MATCH</th>
+                          </tr>
+                       </thead>
+                       <tbody>
+                          <tr><td>💵 TOTAL WITHOUT TAX</td><td id="s-det-portal-net">-</td><td id="s-det-sale-net">-</td><td style="text-align: right;"><span id="s-det-stat-net" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>📦 QUANTITY</td><td id="s-det-portal-qty">-</td><td id="s-det-sale-qty">-</td><td style="text-align: right;"><span id="s-det-stat-qty" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>🚛 TOTAL CGST</td><td id="s-det-portal-cgst">-</td><td id="s-det-sale-cgst">-</td><td style="text-align: right;"><span id="s-det-stat-cgst" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>🚛 TOTAL SGST</td><td id="s-det-portal-sgst">-</td><td id="s-det-sale-sgst">-</td><td style="text-align: right;"><span id="s-det-stat-sgst" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>🔄 ROUND OFF</td><td id="s-det-portal-round">-</td><td id="s-det-sale-round">-</td><td style="text-align: right;"><span id="s-det-stat-round" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr style="background: #f8fafc; border-radius: 10px;">
+                             <td style="font-weight: 800;">💰 TOTAL WITH TAX</td>
+                             <td id="s-det-portal-grand" style="font-weight: 800;">-</td>
+                             <td id="s-det-sale-grand" style="font-weight: 800; color: #8e44ad;">-</td>
+                             <td style="text-align: right;">
+                                <span id="s-det-stat-grand" class="id-status-badge badge-pending">-</span>
+                                <div id="s-det-diff-note" style="font-size: 10px; color: #ef4444; margin-top: 5px; font-weight: 700; text-align: right; display:none; line-height: 1.2;"></div>
+                             </td>
+                          </tr>
+                       </tbody>
+                    </table>
+                 </div>
+   
+                <div class="id-right-section">
+                   <div class="id-logo-box">
+                      <img src="amazon logo.png" alt="Logo" style="max-height: 80px; width: auto;">
+                      <div style="text-align: center; color: #64748b; font-size: 12px; font-weight: 700;">AMAZON INDIA AUDIT</div>
+                   </div>
+                </div>
+             </div>
+              <!-- PDF Management Section -->
+              <div style="padding: 15px 25px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; margin-top: 20px;">
+                <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">📑 PDF ARCHIVE MANAGEMENT</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="pdfLinkInput" placeholder="Paste PDF Link here..." style="flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; outline: none; transition: border 0.2s;">
+                    <button id="pdfSaveExportBtn" style="padding: 10px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s;">SAVE & EXPORT 💾</button>
+                    <button id="pdfExportBtn" style="padding: 10px 20px; background: #ff9900; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s;">PDF EXPORT 📥</button>
+                    <span id="pdfStatus" style="font-size: 11px; font-weight: 800; color: #10b981; opacity: 0; transition: all 0.3s; pointer-events: none;">DONE ✅</span>
+                </div>
+              </div>
+           </div> <!-- Close id-content-wrapper -->
+       </div>
+       <div class="id-footer">
+           <button id="closeSaleIdBtn" class="btn-id-ok">CLOSE</button>
+       </div>
+     </div>
+   </div>
+
+<!-- Vendor Details Modal -->
+   <div id="vendorDetailsModal" class="modal">
+     <div class="id-modal-content">
+       <div class="id-modal-inner">
+          <div class="id-watermark"><img src="amazon logo.png" alt="watermark"></div>
+          <div class="id-content-wrapper">
+             <div class="id-header-row">🚚 VENDOR DETAILS</div>
+             <div class="id-header-row">🏢 SELLER: <span id="v-det-seller">-</span></div>
+             <div class="id-header-row">🆔 GSTIN: <span id="v-det-gstin">-</span></div>
+             <div class="id-header-row">🗓️ INVOICE DATE: <span id="v-det-inv-date">-</span></div>
+             <div class="id-header-row">🧾 INVOICE NO: <span id="v-det-inv-no">-</span></div>
+             
+             <div class="id-sep"></div>
+   
+             <div class="id-main-grid">
+                <div class="id-left-section">
+                    <table class="id-data-table">
+                       <thead>
+                          <tr>
+                             <th>VC COMPONENT</th>
+                             <th style="width: 120px;">PORTAL</th>
+                             <th style="width: 120px;">VC SHEET</th>
+                             <th style="width: 100px; text-align: right;">MATCH</th>
+                          </tr>
+                       </thead>
+                       <tbody>
+                          <tr><td>💵 TOTAL WITHOUT TAX</td><td id="v-det-portal-net">-</td><td id="v-det-vc-net">-</td><td style="text-align: right;"><span id="v-det-stat-net" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>📦 QUANTITY</td><td id="v-det-portal-qty">-</td><td id="v-det-vc-qty">-</td><td style="text-align: right;"><span id="v-det-stat-qty" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>🚛 TOTAL CGST</td><td id="v-det-portal-cgst">-</td><td id="v-det-vc-cgst">-</td><td style="text-align: right;"><span id="v-det-stat-cgst" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr><td>🚛 TOTAL SGST</td><td id="v-det-portal-sgst">-</td><td id="v-det-vc-sgst">-</td><td style="text-align: right;"><span id="v-det-stat-sgst" class="id-status-badge badge-pending">-</span></td></tr>
+                          <tr style="background: #f8fafc; border-radius: 10px;"><td style="font-weight: 800;">💰 TOTAL WITH TAX</td><td id="v-det-portal-grand" style="font-weight: 800;">-</td><td id="v-det-vc-grand" style="font-weight: 800; color: #e67e22;">-</td><td style="text-align: right;"><span id="v-det-stat-grand" class="id-status-badge badge-pending">-</span></td></tr>
+                       </tbody>
+                    </table>
+                 </div>
+   
+                <div class="id-right-section">
+                   <div class="id-logo-box">
+                      <img src="amazon logo.png" alt="Logo" style="max-height: 80px; width: auto;">
+                      <div style="text-align: center; color: #64748b; font-size: 12px; font-weight: 700;">AMAZON INDIA AUDIT</div>
+                   </div>
+                </div>
+             </div>
+          </div>
+       </div>
+        <div class="id-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+            <span id="vcExportStatus" style="font-size: 13px; font-weight: 800; color: #10b981; transition: all 0.3s; opacity: 0; pointer-events: none;">DONE ✅</span>
+            <button id="exportVcBtn" class="btn-id-ok" style="background: #27ae60;">VC EXPORT 📤</button>
+            <button id="closeVcIdBtn" class="btn-id-ok">CLOSE</button>
+        </div>
+     </div>
+   </div>
+
+<!-- Warning Modal -->
+<div id="warningModal" class="modal">
+  <div class="warning-modal-content">
+     <div class="warning-header">🚨 ATTENTION: ERRORS FOUND</div>
+     <div class="warning-body">
+        <p id="warningMessageText">Portal data contains '#N/A' errors in Column AB. This means some items in your Portal file do not match the Purchase bill. Please fix these errors first to ensure your auditing is 100% accurate.</p>
+     </div>
+     <div style="text-align: center; padding-bottom: 20px;">
+         <button id="closeWarningBtn" class="btn-warning-ok">GOT IT!</button>
+     </div>
+  </div>
+</div>
+
+  <!-- MODAL FOR ALL VENDORS -->
+  <div id="allVendorsModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+      </div>
+      <div class="modal-footer">
+        <button id="closeVendorsModalBtn" class="modal-btn">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/api_shared.js"></script>
+  <script src="../../assets/insights_charts.js"></script>
+  <script src="amazon_shared.js"></script>
+  <script src="amazon_audit.js"></script>
+  <script src="amazon_modal.js"></script>
+  <script src="jszip.min.js"></script>
+  <script src="../../mail_export/mail_export.js"></script>
+  <script src="../../assets/chatbot.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Invoice Verifier AI",
+  "version": "1.0",
+  "description": "Verify PDF invoices against portal screenshots using Gemini AI.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.svg",
+      "48": "icon.svg",
+      "128": "icon.svg"
+    }
+  },
+  "icons": {
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
+  }
+}

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Central - Ajio Return Verifier</title>
+    <script src="../../assets/web_chrome_compat.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/upload_modal.css">
+    <link rel="stylesheet" href="../../assets/insights.css">
+    <link rel="stylesheet" href="../../assets/chatbot.css">
+    <style>
+        :root {
+            --primary: #1e293b; /* Ajio theme (Dark/Navy) */
+            --primary-hover: #0f172a;
+            --bg-light: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { 
+            margin: 0; 
+            background: radial-gradient(circle at top left, rgba(30, 41, 59, 0.05), transparent 40%), #f8fafc; 
+            color: var(--text-main); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Premium Header */
+        .header {
+            background: #fff;
+            padding: 15px 30px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-logo-img {
+            height: 45px;
+            width: auto;
+        }
+        .brand-text-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .brand-main-text {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+        }
+        .brand-divider-line {
+            width: 100%;
+            height: 1.2px;
+            background-color: #1e293b;
+            margin: 2px 0;
+        }
+        .brand-sub-text {
+            font-size: 10px;
+            font-weight: 500;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-top: 5px; }
+        .tab-btn {
+            padding: 8px 22px;
+            border: none;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        /* Main Context (Modal-style) */
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .return-panel {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            width: 800px;
+            max-width: 100%;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .fm-card {
+            border-left: 5px solid var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .status-badge-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(30, 41, 59, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="brand-container">
+                <img src="../../assets/logo.png" class="brand-logo-img" alt="Brand Central">
+                <div class="brand-text-stack">
+                    <div class="brand-main-text">Brand Central</div>
+                    <div class="brand-divider-line"></div>
+                    <div class="brand-sub-text">Ecommerce Growth Accelerator</div>
+                </div>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active">CHECK</button>
+            </div>
+        </div>
+        <div id="userBadgeHost"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="return-panel" id="uploadModal">
+            <div id="upload-section">
+                <div class="modal-header" style="text-align: left; padding: 0 0 20px 0;">
+                    <div class="modal-title">AJIO RETURN VERIFICATION</div>
+                    <div class="modal-subtitle">Upload Invoice and Portal Screenshot for AI analysis</div>
+                </div>
+
+                <div class="fm-container">
+                    <div class="fm-card">
+                        <div class="fm-header">
+                            <div class="fm-title">1. INVOICE PDF</div>
+                            <span id="pdfStatus" class="fm-status">Pending</span>
+                        </div>
+                        <div class="fm-body">
+                            <div class="fm-row" style="text-align: center;">
+                                <div class="premium-upload-box" id="pdf-trigger-box">
+                                    <span class="upload-box-text" id="pdf-trigger-text">UPLOAD INVOICE PDF</span>
+                                    <span class="upload-box-icon">📂</span>
+                                </div>
+                                <input type="file" id="pdf-input" class="hidden-input" accept="application/pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fm-card" style="border-left-color: #3b82f6;">
+                        <div class="fm-header">
+                            <div class="fm-title" style="color: #3b82f6;">2. PORTAL IMAGE</div>
+                            <span id="imageStatus" class="fm-status">Pending</span>
+                        </div>
+                        <div class="fm-body">
+                            <div class="fm-row" style="text-align: center;">
+                                <div class="premium-upload-box" id="image-trigger-box" style="border-color: #3b82f6;">
+                                    <span class="upload-box-text" style="color: #3b82f6;" id="image-trigger-text">UPLOAD PORTAL IMAGE</span>
+                                    <span class="upload-box-icon" style="color: #3b82f6;">📂</span>
+                                </div>
+                                <input type="file" id="image-input" class="hidden-input" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button id="verify-btn" class="fm-btn" style="background: var(--primary); width: 220px;" disabled>VERIFY DETAILS</button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="hidden">
+                <div class="modal-header" style="text-align: left; padding: 0 0 10px 0;">
+                    <div class="status-badge-premium" id="status-badge">Processing...</div>
+                    <div class="modal-title">VERIFICATION REPORT</div>
+                </div>
+
+                <div class="results-scroll">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <h4 style="font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">Invoice Summary</h4>
+                            <div id="pdf-summary" class="report-box" style="font-size: 12px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">...</div>
+                        </div>
+                        <div>
+                            <h4 style="font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">Portal Summary</h4>
+                            <div id="image-summary" class="report-box" style="font-size: 12px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">...</div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">AI Detailed Comparison</h4>
+                    <div id="report-content" class="report-box" style="background: #fdfdfd; border-color: #6366f1; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">Waiting for analysis...</div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button id="reset-btn" class="btn-close-fm">NEW CHECK</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; font-weight: 600;">
+        Brand Central AI Processing Hub &copy; 2026
+    </footer>
+
+    <script src="../../assets/api_shared.js"></script>
+    <script src="ajio_return.js"></script>
+    <script src="../../assets/chatbot.js"></script>
+</body>
+</html>

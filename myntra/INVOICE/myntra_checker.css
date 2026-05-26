@@ -1,0 +1,165 @@
+/* Brand Central - Invoice Checker Modal Styles */
+.checker-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+
+.checker-content {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe0b3 100%);
+    width: 600px;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    padding: 20px;
+    position: relative;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2c3e50;
+    border: 1px solid #d35400;
+}
+
+.checker-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed #d35400;
+    padding-bottom: 10px;
+}
+
+.checker-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    background: white;
+    padding: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.checker-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #2c3e50;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.checker-subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #5d4037;
+    margin-top: 5px;
+}
+
+.checker-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.checker-info-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.checker-info-label {
+    width: 120px;
+    font-weight: bold;
+    color: #5d4037;
+}
+
+.checker-info-value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.checker-details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+}
+
+.checker-details-table th {
+    text-align: left;
+    padding: 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #5d4037;
+    border-bottom: 2px solid #d35400;
+}
+
+.checker-details-row {
+    border-bottom: 1px solid rgba(211, 84, 0, 0.1);
+}
+
+.checker-details-row td {
+    padding: 10px 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.status-true {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-false {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.checker-footer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.checker-btn {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.btn-next { background: #bae1d1; color: #2e7d32; border: 1px solid #2e7d32; }
+.btn-auto { background: #dff9fb; color: #130f40; border: 1px solid #130f40; }
+.btn-stop { background: #ffcccc; color: #c0392b; border: 1px solid #c0392b; }
+.btn-close { background: #ecf0f1; color: #34495e; border: 1px solid #34495e; }
+
+.checker-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.close-x {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    cursor: pointer;
+    font-size: 20px;
+    color: #7f8c8d;
+}

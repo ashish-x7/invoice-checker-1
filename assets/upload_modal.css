@@ -1,0 +1,312 @@
+/* Shared upload modal UI for Amazon/Ajio/Myntra
+   Scoped to #uploadModal to avoid affecting other modals. */
+
+#uploadModal.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+
+#uploadModal .modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 30px 40px;
+  border-radius: 24px;
+  width: 880px;
+  max-width: calc(100% - 40px);
+  box-shadow: 0 40px 100px rgba(15, 23, 42, 0.4);
+  position: relative;
+  animation: uploadModalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+@keyframes uploadModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#uploadModal .close-modal {
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  transition: transform 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+#uploadModal .close-modal:hover {
+  background: rgba(15, 23, 42, 0.08);
+  color: rgba(15, 23, 42, 0.75);
+  transform: translateY(-1px);
+}
+
+#uploadModal .modal-header {
+  text-align: center;
+  padding: 6px 0 18px;
+}
+
+#uploadModal .modal-title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #0f172a;
+}
+
+#uploadModal .modal-subtitle {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(71, 85, 105, 0.9);
+}
+
+#uploadModal .fm-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+#uploadModal .fm-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+#uploadModal .fm-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+}
+
+#uploadModal .fm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+#uploadModal .fm-title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+#uploadModal .fm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#uploadModal .fm-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+#uploadModal .fm-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+}
+
+#uploadModal .fm-input:hover {
+  background: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.55);
+}
+
+#uploadModal .fm-input:focus {
+  outline: none;
+  border-color: rgba(15, 23, 42, 0.55);
+}
+
+/* Style the 'Choose File' button inside the input */
+#uploadModal .fm-input::file-selector-button {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+  font-weight: 400; /* Simple text */
+  color: #475569;
+  padding: 4px 10px;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#uploadModal .fm-input::file-selector-button:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+#uploadModal .fm-btn { 
+    padding: 10px 24px; 
+    border-radius: 12px; 
+    font-size: 14px; 
+    font-weight: 500 !important; 
+    border: 1px solid transparent !important; 
+    cursor: pointer; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    color: white !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    white-space: nowrap;
+}
+
+#uploadModal .fm-btn:hover { 
+    transform: translateY(-2px); 
+    filter: brightness(1.1); 
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
+}
+
+#uploadModal .fm-status {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+#uploadModal .fm-status.selected {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+#uploadModal .btn-portal { background: rgba(51, 65, 85, 0.4) !important; border-color: rgba(51, 65, 85, 0.2) !important; }
+#uploadModal .btn-purchase { background: rgba(16, 185, 129, 0.4) !important; border-color: rgba(16, 185, 129, 0.2) !important; }
+#uploadModal .btn-sale { background: rgba(139, 92, 246, 0.4) !important; border-color: rgba(139, 92, 246, 0.2) !important; }
+#uploadModal .btn-vendor { background: rgba(245, 158, 11, 0.4) !important; border-color: rgba(245, 158, 11, 0.2) !important; }
+
+#uploadModal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+#uploadModal .btn-close-fm { 
+    background: rgba(241, 245, 249, 0.5) !important; 
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    color: #475569 !important; 
+    padding: 10px 30px; 
+    border-radius: 12px; 
+    font-weight: 500 !important; 
+    cursor: pointer; 
+    border: 1px solid rgba(226, 232, 240, 0.8) !important; 
+    transition: all 0.2s ease;
+}
+
+#uploadModal #footerCloseModalBtn {
+  background: rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #0f172a;
+  transition: all 0.2s ease;
+}
+
+#uploadModal .btn-close-fm:hover,
+#uploadModal #footerCloseModalBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 860px) {
+  #uploadModal .fm-container { grid-template-columns: 1fr; }
+  #uploadModal .modal-content { width: 640px; }
+}
+
+/* PREMIUM UPLOAD TRIGGER (PILL STYLE) */
+.premium-upload-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    background: #fff;
+    border: 2px solid var(--primary, #6366f1);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.premium-upload-box:hover {
+    background: rgba(148, 163, 184, 0.04);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1.5px);
+}
+
+.premium-upload-box:active {
+    transform: scale(0.98);
+}
+
+.upload-box-text {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--primary, #6366f1);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80%;
+}
+
+.upload-box-icon {
+    font-size: 18px;
+    color: var(--primary, #6366f1);
+    display: flex;
+    align-items: center;
+}
+
+.hidden-input {
+    display: none !important;
+}

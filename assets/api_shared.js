@@ -263,7 +263,14 @@ window.renderGlobalBadge = (containerId, nickname, sessionData = null) => {
     if (!actionHost) { actionHost = document.createElement('div'); actionHost.id = 'globalActionHost'; }
     actionHost.style.cssText = "display:none; align-items:center; gap:8px;";
 
-    topRow.append(actionHost, wrapper, dailyReportBtnGlobal, homeBtn, logoutBtn);
+    // Only show Daily Report button on the main Gateway dashboard, not on platform pages (Ajio/Amazon/Myntra)
+    const isGatewayPage = window.location.href.toLowerCase().includes('gateway/gateway.html') ||
+                          window.location.href.toLowerCase().includes('gateway\\gateway.html');
+    if (isGatewayPage) {
+        topRow.append(actionHost, wrapper, dailyReportBtnGlobal, homeBtn, logoutBtn);
+    } else {
+        topRow.append(actionHost, wrapper, homeBtn, logoutBtn);
+    }
 
     const bottomRow = document.createElement('div');
     bottomRow.style.cssText = "display:flex; gap:8px; align-items:center;";
@@ -1388,6 +1395,93 @@ window.initializeDailyReportGlobal = () => {
 
     // Inject CSS
     const css = `
+    /* --- Daily Report Modal Core Styles (self-contained for all pages) --- */
+    #daily-report-modal.modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #daily-report-modal.modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    #daily-report-modal .access-modal {
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      padding: 32px;
+      border-radius: 24px;
+      text-align: left;
+      width: 90%;
+      max-width: 820px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.2);
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #daily-report-modal.modal-overlay.active .access-modal {
+      transform: scale(1) translateY(0);
+    }
+    #daily-report-modal .btn-outline {
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.15) !important;
+      border: 1px solid rgba(15, 23, 42, 0.15);
+      color: #334155;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500 !important;
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    #daily-report-modal .btn-outline:hover {
+      background: rgba(255,255,255,0.3) !important;
+      border-color: #6366f1;
+      transform: translateY(-1px);
+    }
+    #daily-report-modal .btn-main {
+      width: 100%;
+      padding: 13px 16px;
+      background: #d97706;
+      color: white;
+      border: 1px solid #b45309;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    #daily-report-modal .btn-main:hover {
+      background: #b45309;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(180, 83, 9, 0.3);
+    }
+    #daily-report-modal .insights-select {
+      border: 1px solid rgba(0,0,0,0.12) !important;
+      background: rgba(255,255,255,0.6) !important;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-weight: 500 !important;
+      color: #334155 !important;
+      outline: none;
+    }
+    #daily-report-modal .insights-select:focus {
+      background: rgba(255,255,255,0.9) !important;
+      border-color: #6366f1 !important;
+    }
     .report-modal-large {
       max-width: 820px !important;
       width: 820px !important;

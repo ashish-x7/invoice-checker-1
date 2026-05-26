@@ -691,6 +691,176 @@
     </div>
   </div>
 
+  <!-- Daily Work Report Modal -->
+  <div id="daily-report-modal" class="modal-overlay">
+    <div class="access-modal" style="width: 600px; text-align: left; padding: 28px; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 42px; height: 42px; background: #fffbeb; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📅</div>
+          <div>
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Daily Work Report</h2>
+            <p style="margin: 2px 0 0; font-size: 0.85rem; color: #64748b;">Verify stats & add other tasks before downloading</p>
+          </div>
+        </div>
+        <button id="close-daily-report-btn" style="background:none; border:none; font-size: 24px; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+        <div class="input-group" style="flex: 1; text-align: left;">
+          <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Operator Name</label>
+          <input type="text" id="report-user-name" class="insights-select" style="width: 100%; margin-top: 5px; height: 40px; font-weight: 600;">
+        </div>
+        <div class="input-group" style="flex: 1; text-align: left;">
+          <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Date & Time</label>
+          <input type="text" id="report-datetime" class="insights-select" style="width: 100%; margin-top: 5px; height: 40px; background-color: #f1f5f9; cursor: not-allowed;" readonly>
+        </div>
+      </div>
+
+      <!-- Stats Grid Form -->
+      <h3 style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px;">Activity Statistics</h3>
+      <div style="max-height: 250px; overflow-y: auto; padding-right: 4px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <!-- AJIO Stats -->
+        <div class="report-stat-form-card" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+          <h4 style="margin: 0 0 6px 0; font-size: 11px; color: #3b82f6; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">AJIO</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Invoices</label>
+              <input type="number" id="input-ajio-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Bills</label>
+              <input type="number" id="input-ajio-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+              <input type="number" id="input-ajio-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+              <input type="number" id="input-ajio-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- AMAZON Stats -->
+        <div class="report-stat-form-card" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+          <h4 style="margin: 0 0 6px 0; font-size: 11px; color: #10b981; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">AMAZON</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Invoices</label>
+              <input type="number" id="input-amazon-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Bills</label>
+              <input type="number" id="input-amazon-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+              <input type="number" id="input-amazon-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+              <input type="number" id="input-amazon-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- MYNTRA Stats -->
+        <div class="report-stat-form-card" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; grid-column: span 2;">
+          <h4 style="margin: 0 0 6px 0; font-size: 11px; color: #f43f5e; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">MYNTRA</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Invoices</label>
+              <input type="number" id="input-myntra-sales" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Bills</label>
+              <input type="number" id="input-myntra-purchases" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Credit Note</label>
+              <input type="number" id="input-myntra-cn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: #64748b;">Debit Note</label>
+              <input type="number" id="input-myntra-dn" value="0" class="insights-select" style="width:100%; height:32px; padding: 4px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Work Dynamic Form -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px;">
+        <h3 style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase; margin: 0;">Other Work</h3>
+        <button id="add-other-work-btn" class="btn-outline" style="padding: 4px 10px; font-size: 11px; background: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; border-color: rgba(16, 185, 129, 0.3) !important;">+ Add Task</button>
+      </div>
+      <div id="other-work-inputs-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+        <!-- Dynamic task inputs will go here -->
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button id="cancel-daily-report-btn" class="btn-outline" style="flex: 1; padding: 12px;">Cancel</button>
+        <button id="generate-report-img-btn" class="btn-main" style="flex: 2; padding: 12px; background: #d97706; border-color: #d97706;">Download Report Image 📥</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Report Card Template for Screenshot -->
+  <div id="report-screenshot-template" style="position: absolute; left: -9999px; top: 0; width: 650px; background: #ffffff; padding: 30px; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif;">
+    
+    <!-- Logo Header Block -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid #0f172a; padding-bottom: 16px;">
+      <img src="../logo.png" style="width: 54px; height: 54px; object-fit: contain;">
+      <div>
+        <div style="font-size: 28px; font-weight: 850; color: #1e293b; letter-spacing: -0.5px; line-height: 1.1;">Brand Central</div>
+        <div style="font-size: 13px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px;">Ecommerce Growth Accelerator</div>
+      </div>
+    </div>
+
+    <!-- Title Block -->
+    <div style="text-align: center; margin-bottom: 20px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px; font-size: 18px; font-weight: 800; color: #1e293b; letter-spacing: 1px; text-transform: uppercase;">
+      DAILY WORK REPORT
+    </div>
+
+    <!-- Metadata Block -->
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+      <tr>
+        <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; width: 120px; background: #f8fafc;">Name:</td>
+        <td id="template-user-name" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; color: #475569; background: #f8fafc;">Date & Time:</td>
+        <td id="template-datetime" style="border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: 600; color: #0f172a;"></td>
+      </tr>
+    </table>
+
+    <!-- Main Stats Table -->
+    <table id="template-stats-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+      <thead>
+        <tr style="background: #dbeafe; font-weight: bold; text-align: left; color: #1e3a8a;">
+          <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 75%;">Activity / Work Item</th>
+          <th style="border: 1.5px solid #94a3b8; padding: 8px 12px; width: 25%; text-align: center;">Count</th>
+        </tr>
+      </thead>
+      <tbody id="template-stats-tbody">
+      </tbody>
+    </table>
+
+    <!-- Other Work Section -->
+    <div id="template-other-work-section" style="margin-top: 20px; display: none;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+          <tr style="background: #e2e8f0; font-weight: bold; text-align: left; color: #334155;">
+            <th style="border: 1.5px solid #94a3b8; padding: 8px 12px;">OTHER WORK</th>
+          </tr>
+        </thead>
+        <tbody id="template-other-work-tbody">
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
   <script src="../assets/api_shared.js"></script>
   <script src="../assets/insights_charts.js"></script>
   <script src="gateway.js"></script>

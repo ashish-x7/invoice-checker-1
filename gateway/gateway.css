@@ -1285,3 +1285,44 @@ h1 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Daily Report Modal Form Styles */
+.report-stat-form-card {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.report-stat-form-card:hover {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.report-stat-form-card label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.other-work-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.other-work-row input {
+  flex: 1;
+}
+.btn-delete-task {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delete-task:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.05);
+}

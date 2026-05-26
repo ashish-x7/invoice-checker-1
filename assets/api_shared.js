@@ -1373,12 +1373,21 @@ window.getTodayActivityStatsGlobal = async () => {
 };
 
 window.initializeDailyReportGlobal = () => {
+    console.log("[DailyReport][Shared] initializeDailyReportGlobal called");
     const bindDailyReportGlobalEvents = () => {
+        console.log("[DailyReport][Shared] binding modal events");
         const closeBtn = document.getElementById('close-daily-report-btn');
         const cancelBtn = document.getElementById('cancel-daily-report-btn');
         const addOtherWorkBtn = document.getElementById('add-other-work-btn');
         const downloadBtn = document.getElementById('generate-report-img-btn');
         const dailyReportModal = document.getElementById('daily-report-modal');
+        console.log("[DailyReport][Shared] event elements:", {
+            closeBtn: !!closeBtn,
+            cancelBtn: !!cancelBtn,
+            addOtherWorkBtn: !!addOtherWorkBtn,
+            downloadBtn: !!downloadBtn,
+            dailyReportModal: !!dailyReportModal
+        });
 
         if (closeBtn) closeBtn.onclick = window.closeDailyReportModalGlobal;
         if (cancelBtn) cancelBtn.onclick = window.closeDailyReportModalGlobal;
@@ -1392,6 +1401,7 @@ window.initializeDailyReportGlobal = () => {
     };
 
     const modalAlreadyExists = !!document.getElementById('daily-report-modal');
+    console.log("[DailyReport][Shared] modal already exists:", modalAlreadyExists);
     if (modalAlreadyExists) {
         bindDailyReportGlobalEvents();
         return;
@@ -1717,21 +1727,39 @@ window.initializeDailyReportGlobal = () => {
 };
 
 window.openDailyReportModalGlobal = async () => {
+    console.log("[DailyReport][Shared] openDailyReportModalGlobal called");
     window.initializeDailyReportGlobal();
 
     const modal = document.getElementById('daily-report-modal');
+    console.log("[DailyReport][Shared] modal found after init:", !!modal, modal);
     if (!modal) return;
 
     const nameInput = document.getElementById('report-user-name');
     const datetimeInput = document.getElementById('report-datetime');
+    console.log("[DailyReport][Shared] inputs found:", { nameInput: !!nameInput, datetimeInput: !!datetimeInput });
 
     let nickname = "User";
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        const res = await new Promise(r => chrome.storage.local.get(['nickname'], r));
+        const res = await new Promise((resolve) => {
+            let settled = false;
+            const finish = (value) => {
+                if (settled) return;
+                settled = true;
+                resolve(value || {});
+            };
+            try {
+                chrome.storage.local.get(['nickname'], finish);
+                setTimeout(() => finish({}), 800);
+            } catch (err) {
+                console.error("[DailyReport][Shared] nickname storage read failed:", err);
+                finish({});
+            }
+        });
         nickname = res.nickname || localStorage.getItem('nickname') || "User";
     } else {
         nickname = localStorage.getItem('nickname') || "User";
     }
+    console.log("[DailyReport][Shared] nickname resolved:", nickname);
     if (nameInput) nameInput.value = nickname.toUpperCase();
 
     const now = new Date();
@@ -1744,12 +1772,16 @@ window.openDailyReportModalGlobal = async () => {
     if (datetimeInput) datetimeInput.value = formatTimeCustomLocal(now.getTime());
 
     modal.classList.add('active');
+    console.log("[DailyReport][Shared] active class added:", modal.className, modal.classList.contains('active'));
 
     // Fetch today's stats and populate form
     try {
+        console.log("[DailyReport][Shared] loading stats");
         const stats = await window.getTodayActivityStatsGlobal();
+        console.log("[DailyReport][Shared] stats resolved:", stats);
         const setValue = (id, value) => {
             const input = document.getElementById(id);
+            if (!input) console.warn("[DailyReport][Shared] missing stat input:", id);
             if (input) input.value = value || 0;
         };
 
@@ -1777,6 +1809,7 @@ window.openDailyReportModalGlobal = async () => {
         container.innerHTML = '';
         window.addOtherWorkRowGlobal();
     }
+    console.log("[DailyReport][Shared] openDailyReportModalGlobal finished");
 };
 
 window.closeDailyReportModalGlobal = () => {

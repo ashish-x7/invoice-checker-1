@@ -1783,29 +1783,26 @@ if (saveUsersBtn) saveUsersBtn.onclick = saveUsers;
 
 // Daily Report button hook (routes to global daily work report system)
 const openDailyReportFromGateway = async () => {
+  console.log("[DailyReport][Gateway] openDailyReportFromGateway called");
   const modal = document.getElementById('daily-report-modal');
+  console.log("[DailyReport][Gateway] modal found:", !!modal, modal);
   if (!modal) {
     showToast("Daily Report modal page me nahi mila. Page reload karein.", "error");
     return;
   }
 
-  if (typeof window.openDailyReportModalGlobal === 'function') {
-    try {
-      await window.openDailyReportModalGlobal();
-      if (modal.classList.contains('active')) return;
-    } catch (err) {
-      console.error("Shared daily report opener failed, using gateway fallback:", err);
-    }
-  }
-
+  console.log("[DailyReport][Gateway] opening main dashboard modal directly");
   const { nickname, session } = await storage.get(['nickname', 'session']);
+  console.log("[DailyReport][Gateway] storage values:", { nickname, hasSession: !!session, sessionNick: session && session.nickName });
   const operatorName = nickname || (session && session.nickName) || 'User';
   const nameInput = document.getElementById('report-user-name');
+  console.log("[DailyReport][Gateway] name input found:", !!nameInput);
   if (nameInput) nameInput.value = String(operatorName).toUpperCase();
 
   const pad = (n) => String(n).padStart(2, '0');
   const now = new Date();
   const datetimeInput = document.getElementById('report-datetime');
+  console.log("[DailyReport][Gateway] datetime input found:", !!datetimeInput);
   if (datetimeInput) {
     datetimeInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   }
@@ -1815,15 +1812,18 @@ const openDailyReportFromGateway = async () => {
     amazon: { sales: 0, purchases: 0, cn: 0, dn: 0 },
     myntra: { sales: 0, purchases: 0, cn: 0, dn: 0 }
   };
+  console.log("[DailyReport][Gateway] stats loader type:", typeof window.getTodayActivityStatsGlobal);
   const stats = typeof window.getTodayActivityStatsGlobal === 'function'
     ? await window.getTodayActivityStatsGlobal().catch((err) => {
         console.error("Daily report stats load failed:", err);
         return fallbackStats;
       })
     : fallbackStats;
+  console.log("[DailyReport][Gateway] stats resolved:", stats);
 
   const setValue = (id, value) => {
     const input = document.getElementById(id);
+    if (!input) console.warn("[DailyReport][Gateway] missing stat input:", id);
     if (input) input.value = value || 0;
   };
   ['ajio', 'amazon', 'myntra'].forEach((platform) => {
@@ -1834,6 +1834,10 @@ const openDailyReportFromGateway = async () => {
   });
 
   const closeModal = () => modal.classList.remove('active');
+  console.log("[DailyReport][Gateway] close button found:", !!document.getElementById('close-daily-report-btn'));
+  console.log("[DailyReport][Gateway] cancel button found:", !!document.getElementById('cancel-daily-report-btn'));
+  console.log("[DailyReport][Gateway] add other work button found:", !!document.getElementById('add-other-work-btn'));
+  console.log("[DailyReport][Gateway] generate button found:", !!document.getElementById('generate-report-img-btn'));
   document.getElementById('close-daily-report-btn')?.addEventListener('click', closeModal, { once: true });
   document.getElementById('cancel-daily-report-btn')?.addEventListener('click', closeModal, { once: true });
   document.getElementById('add-other-work-btn')?.addEventListener('click', () => {
@@ -1844,18 +1848,22 @@ const openDailyReportFromGateway = async () => {
   });
 
   const container = document.getElementById('other-work-inputs-container');
+  console.log("[DailyReport][Gateway] other work container found:", !!container);
   if (container) {
     container.innerHTML = '';
     if (typeof window.addOtherWorkRowGlobal === 'function') window.addOtherWorkRowGlobal();
   }
 
   modal.classList.add('active');
+  console.log("[DailyReport][Gateway] local fallback finished. modal class:", modal.className, "active:", modal.classList.contains('active'));
 };
 
 const dailyReportBtn = document.getElementById('dailyReportBtn');
+console.log("[DailyReport][Gateway] dailyReportBtn found at bind time:", !!dailyReportBtn, dailyReportBtn);
 if (dailyReportBtn) {
   dailyReportBtn.addEventListener('click', async (e) => {
     e.preventDefault();
+    console.log("[DailyReport][Gateway] dailyReportBtn clicked");
     try {
       await openDailyReportFromGateway();
     } catch (err) {

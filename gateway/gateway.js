@@ -1812,13 +1812,24 @@ const openDailyReportFromGateway = async () => {
     amazon: { sales: 0, purchases: 0, cn: 0, dn: 0 },
     myntra: { sales: 0, purchases: 0, cn: 0, dn: 0 }
   };
+
+  modal.classList.add('active');
+  console.log("[DailyReport][Gateway] modal opened before stats. modal class:", modal.className, "active:", modal.classList.contains('active'));
+
   console.log("[DailyReport][Gateway] stats loader type:", typeof window.getTodayActivityStatsGlobal);
-  const stats = typeof window.getTodayActivityStatsGlobal === 'function'
-    ? await window.getTodayActivityStatsGlobal().catch((err) => {
-        console.error("Daily report stats load failed:", err);
-        return fallbackStats;
-      })
-    : fallbackStats;
+  let stats = fallbackStats;
+  if (typeof window.getTodayActivityStatsGlobal === 'function') {
+    stats = await Promise.race([
+      window.getTodayActivityStatsGlobal(),
+      new Promise((resolve) => setTimeout(() => {
+        console.warn("[DailyReport][Gateway] stats load timed out, using fallback zeros");
+        resolve(fallbackStats);
+      }, 800))
+    ]).catch((err) => {
+      console.error("Daily report stats load failed:", err);
+      return fallbackStats;
+    });
+  }
   console.log("[DailyReport][Gateway] stats resolved:", stats);
 
   const setValue = (id, value) => {
@@ -1854,7 +1865,6 @@ const openDailyReportFromGateway = async () => {
     if (typeof window.addOtherWorkRowGlobal === 'function') window.addOtherWorkRowGlobal();
   }
 
-  modal.classList.add('active');
   console.log("[DailyReport][Gateway] local fallback finished. modal class:", modal.className, "active:", modal.classList.contains('active'));
 };
 

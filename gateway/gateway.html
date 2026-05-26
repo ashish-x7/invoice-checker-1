@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Invoice Checker Dashboard</title>
   <link rel="icon" type="image/png" href="../CHATBOT.png">
-  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="gateway.css">
   <link rel="stylesheet" href="../assets/insights.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/chatbot.css">
@@ -157,68 +157,68 @@
     <div class="card-glow"></div>
     <!-- Login State -->
     <div id="login-form" class="auth-box">
-      <h1>Welcome Back</h1>
-      <p class="subtitle">Please enter your details to continue</p>
+      <h1>Verification Hub</h1>
+      <p class="subtitle">Enter access details to proceed</p>
       <div class="input-group">
-        <label>User ID</label>
-        <input type="text" id="login-user-id" placeholder="Enter your ID">
+        <label>Account ID</label>
+        <input type="text" id="login-user-id" placeholder="Enter ID">
       </div>
       <div class="input-group">
-        <label>Password</label>
+        <label>Access Pin</label>
         <input type="password" id="login-password" placeholder="••••••••">
       </div>
-      <button id="login-btn" class="btn-main">Login</button>
+      <button id="login-btn" class="btn-main">Proceed</button>
       <div class="auth-footer">
-        <span id="goto-register">New User? Register</span>
-        <span id="goto-forget">Forgot Password?</span>
+        <span id="goto-register">New Profile</span>
+        <span id="goto-forget">Change Security Pin</span>
       </div>
     </div>
 
     <!-- Register State -->
     <div id="register-form" class="auth-box hidden">
-      <h1>Create Account</h1>
+      <h1>Setup Access</h1>
       <p class="subtitle">Join the Invoice Checker platform</p>
       <div class="input-group">
-        <label>User ID</label>
-        <input type="text" id="reg-user-id" placeholder="Choose a User ID">
+        <label>Account ID</label>
+        <input type="text" id="reg-user-id" placeholder="Choose Account ID">
       </div>
       <div class="input-group">
         <label>Nickname</label>
         <input type="text" id="reg-nickname" placeholder="What should we call you?">
       </div>
       <div class="input-group">
-        <label>Password</label>
+        <label>Access Pin</label>
         <input type="password" id="reg-password" placeholder="••••••••">
       </div>
-      <button id="register-submit-btn" class="btn-main">Register</button>
+      <button id="register-submit-btn" class="btn-main">Save Profile</button>
       <div class="auth-footer">
-        <span id="goto-login-from-reg">Back to Login</span>
+        <span id="goto-login-from-reg">Back</span>
       </div>
     </div>
 
     <!-- Forget Password State -->
     <div id="forget-form" class="auth-box hidden">
-      <h1>Reset Password</h1>
+      <h1>Modify Access Pin</h1>
       <p class="subtitle">Update your credentials</p>
       <div class="input-group">
-        <label>User ID</label>
-        <input type="text" id="forget-user-id" placeholder="Enter User ID">
+        <label>Account ID</label>
+        <input type="text" id="forget-user-id" placeholder="Enter Account ID">
       </div>
       <div class="input-group">
-        <label>Old Password</label>
+        <label>Old Access Pin</label>
         <input type="password" id="forget-old-password" placeholder="••••••••">
       </div>
       <div class="input-group">
-        <label>New Password</label>
+        <label>New Access Pin</label>
         <input type="password" id="forget-new-password" placeholder="••••••••">
       </div>
       <div class="input-group">
-        <label>Confirm Password</label>
+        <label>Verify Access Pin</label>
         <input type="password" id="forget-confirm-password" placeholder="••••••••">
       </div>
-      <button id="reset-submit-btn" class="btn-main">Reset Password</button>
+      <button id="reset-submit-btn" class="btn-main">Update Pin</button>
       <div class="auth-footer">
-        <span id="goto-login-from-forget">Back to Login</span>
+        <span id="goto-login-from-forget">Back</span>
       </div>
     </div>
 
@@ -692,7 +692,7 @@
 
   <script src="../assets/api_shared.js"></script>
   <script src="../assets/insights_charts.js"></script>
-  <script src="auth.js"></script>
+  <script src="gateway.js"></script>
   <script src="../assets/chatbot.js"></script>
   <!-- Background Progress Bubble -->
   <div id="report-progress-bubble" class="report-bubble" style="display: none;">

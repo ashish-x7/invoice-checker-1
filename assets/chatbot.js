@@ -340,7 +340,7 @@ function getCurrentContext() {
     
     // 2. Check window location path
     const path = window.location.pathname;
-    if (path.includes('/auth/auth.html')) {
+    if (path.includes('/gateway/gateway.html')) {
         return 'main_dashboard';
     } else if (path.includes('/ajio/INVOICE/')) {
         return 'ajio_invoice';

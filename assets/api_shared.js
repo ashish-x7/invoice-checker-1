@@ -158,7 +158,10 @@ function getLocalSessionSnapshot() {
     return { session, nickname };
 }
 
-function normalizeOkNoAccess(value) { return String(value || "NO").trim().toUpperCase() === "OK" ? "OK" : "NO"; }
+function normalizeOkNoAccess(value) {
+    const normalized = String(value || "NO").trim().toUpperCase();
+    return ["OK", "YES", "TRUE", "1"].includes(normalized) ? "OK" : "NO";
+}
 function normalizeSessionAccessShape(access) {
     const raw = access || {};
     const normalized = {
@@ -308,6 +311,7 @@ window.renderGlobalBadge = (containerId, nickname, sessionData = null) => {
             if (label === "INSIGHTS") { window.location.href = window.resolveLocalPath(url); return; }
             const hasInv = hasModuleAccessInSession(access, label, "INVOICE");
             const hasRet = hasModuleAccessInSession(access, label, "RETURN");
+            if (isAdmin || hasInv || (!hasInv && !hasRet)) { window.location.href = window.resolveLocalPath(url); return; }
             if (hasInv && !hasRet) { window.location.href = window.resolveLocalPath(url); return; }
             if (!hasInv && hasRet) { window.location.href = window.resolveLocalPath(url.replace('/INVOICE/', '/RETURN/').replace('.html', '_return.html')); return; }
             const choice = await window.showCustomModal({ title: `${label} Selection`, message: `Open ${label} module:`, confirmText: 'INVOICE', cancelText: 'RETURN' });

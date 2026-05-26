@@ -1757,7 +1757,7 @@ function renderTable() {
     }
     if (!globalFilteredData || globalFilteredData.length <= 1) { 
         console.log(`[DEBUG] renderTable | NO DATA FOUND for display`);
-        cont.innerHTML = "<div class='no-data-msg'><h3>No Data Uploaded</h3><p>Please use 'Upload Files' to begin.</p></div>"; 
+        cont.innerHTML = "<div style='text-align:center; padding: 50px; color: #64748b;'><h3>No data available</h3><p>Click 'Upload Files &#x1F4C1;' above to start processing.</p></div>"; 
         if(info) info.textContent = "0 Rows"; return; 
     }
     if(info) info.textContent = (globalFilteredData.length-1) + " Rows";

@@ -1782,13 +1782,87 @@ if (loadUsersBtn) loadUsersBtn.onclick = loadUsers;
 if (saveUsersBtn) saveUsersBtn.onclick = saveUsers;
 
 // Daily Report button hook (routes to global daily work report system)
+const openDailyReportFromGateway = async () => {
+  const modal = document.getElementById('daily-report-modal');
+  if (!modal) {
+    showToast("Daily Report modal page me nahi mila. Page reload karein.", "error");
+    return;
+  }
+
+  if (typeof window.openDailyReportModalGlobal === 'function') {
+    try {
+      await window.openDailyReportModalGlobal();
+      if (modal.classList.contains('active')) return;
+    } catch (err) {
+      console.error("Shared daily report opener failed, using gateway fallback:", err);
+    }
+  }
+
+  const { nickname, session } = await storage.get(['nickname', 'session']);
+  const operatorName = nickname || (session && session.nickName) || 'User';
+  const nameInput = document.getElementById('report-user-name');
+  if (nameInput) nameInput.value = String(operatorName).toUpperCase();
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const now = new Date();
+  const datetimeInput = document.getElementById('report-datetime');
+  if (datetimeInput) {
+    datetimeInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+
+  const fallbackStats = {
+    ajio: { sales: 0, purchases: 0, cn: 0, dn: 0 },
+    amazon: { sales: 0, purchases: 0, cn: 0, dn: 0 },
+    myntra: { sales: 0, purchases: 0, cn: 0, dn: 0 }
+  };
+  const stats = typeof window.getTodayActivityStatsGlobal === 'function'
+    ? await window.getTodayActivityStatsGlobal().catch((err) => {
+        console.error("Daily report stats load failed:", err);
+        return fallbackStats;
+      })
+    : fallbackStats;
+
+  const setValue = (id, value) => {
+    const input = document.getElementById(id);
+    if (input) input.value = value || 0;
+  };
+  ['ajio', 'amazon', 'myntra'].forEach((platform) => {
+    setValue(`input-${platform}-sales`, stats[platform].sales);
+    setValue(`input-${platform}-purchases`, stats[platform].purchases);
+    setValue(`input-${platform}-cn`, stats[platform].cn);
+    setValue(`input-${platform}-dn`, stats[platform].dn);
+  });
+
+  const closeModal = () => modal.classList.remove('active');
+  document.getElementById('close-daily-report-btn')?.addEventListener('click', closeModal, { once: true });
+  document.getElementById('cancel-daily-report-btn')?.addEventListener('click', closeModal, { once: true });
+  document.getElementById('add-other-work-btn')?.addEventListener('click', () => {
+    if (typeof window.addOtherWorkRowGlobal === 'function') window.addOtherWorkRowGlobal();
+  });
+  document.getElementById('generate-report-img-btn')?.addEventListener('click', () => {
+    if (typeof window.downloadReportImageGlobal === 'function') window.downloadReportImageGlobal();
+  });
+
+  const container = document.getElementById('other-work-inputs-container');
+  if (container) {
+    container.innerHTML = '';
+    if (typeof window.addOtherWorkRowGlobal === 'function') window.addOtherWorkRowGlobal();
+  }
+
+  modal.classList.add('active');
+};
+
 const dailyReportBtn = document.getElementById('dailyReportBtn');
 if (dailyReportBtn) {
-  dailyReportBtn.onclick = () => {
-    if (typeof window.openDailyReportModalGlobal === 'function') {
-      window.openDailyReportModalGlobal();
+  dailyReportBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await openDailyReportFromGateway();
+    } catch (err) {
+      console.error("Daily report open failed:", err);
+      showToast("Daily Report open nahi ho paya. Page reload karke try karein.", "error");
     }
-  };
+  });
 }
 
 // Export Data Logic

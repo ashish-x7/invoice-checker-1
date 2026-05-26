@@ -248,29 +248,11 @@ window.renderGlobalBadge = (containerId, nickname, sessionData = null) => {
     homeBtn.style.cssText = "background:#475569; border:none; border-radius:10px; width:34px; height:34px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; transition:all 0.2s;";
     homeBtn.onclick = () => { window.location.href = window.resolveLocalPath('gateway/gateway.html'); };
 
-    const dailyReportBtnGlobal = document.createElement('button');
-    dailyReportBtnGlobal.id = "dailyReportBtnGlobal";
-    dailyReportBtnGlobal.title = "Daily Work Report";
-    dailyReportBtnGlobal.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
-    dailyReportBtnGlobal.style.cssText = "background:#d97706; border:none; border-radius:10px; width:34px; height:34px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; transition:all 0.2s; margin-right:4px;";
-    dailyReportBtnGlobal.onclick = () => {
-        if (typeof window.openDailyReportModalGlobal === 'function') {
-            window.openDailyReportModalGlobal();
-        }
-    };
-
     let actionHost = document.getElementById('globalActionHost');
     if (!actionHost) { actionHost = document.createElement('div'); actionHost.id = 'globalActionHost'; }
     actionHost.style.cssText = "display:none; align-items:center; gap:8px;";
 
-    // Only show Daily Report button on the main Gateway dashboard, not on platform pages (Ajio/Amazon/Myntra)
-    const isGatewayPage = window.location.href.toLowerCase().includes('gateway/gateway.html') ||
-                          window.location.href.toLowerCase().includes('gateway\\gateway.html');
-    if (isGatewayPage) {
-        topRow.append(actionHost, wrapper, dailyReportBtnGlobal, homeBtn, logoutBtn);
-    } else {
-        topRow.append(actionHost, wrapper, homeBtn, logoutBtn);
-    }
+    topRow.append(actionHost, wrapper, homeBtn, logoutBtn);
 
     const bottomRow = document.createElement('div');
     bottomRow.style.cssText = "display:flex; gap:8px; align-items:center;";
@@ -1391,7 +1373,29 @@ window.getTodayActivityStatsGlobal = async () => {
 };
 
 window.initializeDailyReportGlobal = () => {
-    if (document.getElementById('daily-report-modal')) return;
+    const bindDailyReportGlobalEvents = () => {
+        const closeBtn = document.getElementById('close-daily-report-btn');
+        const cancelBtn = document.getElementById('cancel-daily-report-btn');
+        const addOtherWorkBtn = document.getElementById('add-other-work-btn');
+        const downloadBtn = document.getElementById('generate-report-img-btn');
+        const dailyReportModal = document.getElementById('daily-report-modal');
+
+        if (closeBtn) closeBtn.onclick = window.closeDailyReportModalGlobal;
+        if (cancelBtn) cancelBtn.onclick = window.closeDailyReportModalGlobal;
+        if (addOtherWorkBtn) addOtherWorkBtn.onclick = () => window.addOtherWorkRowGlobal();
+        if (downloadBtn) downloadBtn.onclick = window.downloadReportImageGlobal;
+        if (dailyReportModal) {
+            dailyReportModal.onclick = (e) => {
+                if (e.target && e.target.id === 'daily-report-modal') window.closeDailyReportModalGlobal();
+            };
+        }
+    };
+
+    const modalAlreadyExists = !!document.getElementById('daily-report-modal');
+    if (modalAlreadyExists) {
+        bindDailyReportGlobalEvents();
+        return;
+    }
 
     // Inject CSS
     const css = `
@@ -1709,18 +1713,7 @@ window.initializeDailyReportGlobal = () => {
     const logoImg = document.getElementById('template-brand-logo');
     if (logoImg) logoImg.src = window.resolveLocalPath('logo.png');
 
-    // Bind event listeners
-    document.getElementById('close-daily-report-btn').onclick = window.closeDailyReportModalGlobal;
-    document.getElementById('cancel-daily-report-btn').onclick = window.closeDailyReportModalGlobal;
-    document.getElementById('add-other-work-btn').onclick = () => window.addOtherWorkRowGlobal();
-    document.getElementById('generate-report-img-btn').onclick = window.downloadReportImageGlobal;
-    
-    const dailyReportModal = document.getElementById('daily-report-modal');
-    if (dailyReportModal) {
-      dailyReportModal.onclick = (e) => {
-        if (e.target && e.target.id === 'daily-report-modal') window.closeDailyReportModalGlobal();
-      };
-    }
+    bindDailyReportGlobalEvents();
 };
 
 window.openDailyReportModalGlobal = async () => {
@@ -1739,7 +1732,7 @@ window.openDailyReportModalGlobal = async () => {
     } else {
         nickname = localStorage.getItem('nickname') || "User";
     }
-    nameInput.value = nickname.toUpperCase();
+    if (nameInput) nameInput.value = nickname.toUpperCase();
 
     const now = new Date();
     // Helper to format date
@@ -1748,25 +1741,35 @@ window.openDailyReportModalGlobal = async () => {
         const d = new Date(t);
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
-    datetimeInput.value = formatTimeCustomLocal(now.getTime());
+    if (datetimeInput) datetimeInput.value = formatTimeCustomLocal(now.getTime());
+
+    modal.classList.add('active');
 
     // Fetch today's stats and populate form
-    const stats = await window.getTodayActivityStatsGlobal();
+    try {
+        const stats = await window.getTodayActivityStatsGlobal();
+        const setValue = (id, value) => {
+            const input = document.getElementById(id);
+            if (input) input.value = value || 0;
+        };
 
-    document.getElementById('input-ajio-sales').value = stats.ajio.sales;
-    document.getElementById('input-ajio-purchases').value = stats.ajio.purchases;
-    document.getElementById('input-ajio-cn').value = stats.ajio.cn;
-    document.getElementById('input-ajio-dn').value = stats.ajio.dn;
+        setValue('input-ajio-sales', stats.ajio.sales);
+        setValue('input-ajio-purchases', stats.ajio.purchases);
+        setValue('input-ajio-cn', stats.ajio.cn);
+        setValue('input-ajio-dn', stats.ajio.dn);
 
-    document.getElementById('input-amazon-sales').value = stats.amazon.sales;
-    document.getElementById('input-amazon-purchases').value = stats.amazon.purchases;
-    document.getElementById('input-amazon-cn').value = stats.amazon.cn;
-    document.getElementById('input-amazon-dn').value = stats.amazon.dn;
+        setValue('input-amazon-sales', stats.amazon.sales);
+        setValue('input-amazon-purchases', stats.amazon.purchases);
+        setValue('input-amazon-cn', stats.amazon.cn);
+        setValue('input-amazon-dn', stats.amazon.dn);
 
-    document.getElementById('input-myntra-sales').value = stats.myntra.sales;
-    document.getElementById('input-myntra-purchases').value = stats.myntra.purchases;
-    document.getElementById('input-myntra-cn').value = stats.myntra.cn;
-    document.getElementById('input-myntra-dn').value = stats.myntra.dn;
+        setValue('input-myntra-sales', stats.myntra.sales);
+        setValue('input-myntra-purchases', stats.myntra.purchases);
+        setValue('input-myntra-cn', stats.myntra.cn);
+        setValue('input-myntra-dn', stats.myntra.dn);
+    } catch (err) {
+        console.error("Daily report stats load failed:", err);
+    }
 
     // Clear other work inputs
     const container = document.getElementById('other-work-inputs-container');
@@ -1774,8 +1777,6 @@ window.openDailyReportModalGlobal = async () => {
         container.innerHTML = '';
         window.addOtherWorkRowGlobal();
     }
-
-    modal.classList.add('active');
 };
 
 window.closeDailyReportModalGlobal = () => {

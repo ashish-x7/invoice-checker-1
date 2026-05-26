@@ -6,7 +6,282 @@ document.addEventListener('DOMContentLoaded', () => {
     initAjChat();
 });
 
+function ensureAjChatStyles() {
+    if (document.getElementById('aj-chatbot-critical-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'aj-chatbot-critical-styles';
+    style.textContent = `
+        .aj-widget {
+            position: fixed !important;
+            right: 30px !important;
+            bottom: 30px !important;
+            z-index: 99999 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            gap: 15px !important;
+            width: auto !important;
+            max-width: none !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            font-family: 'Outfit', 'Inter', Arial, sans-serif !important;
+        }
+        .aj-widget, .aj-widget * {
+            box-sizing: border-box !important;
+        }
+        .aj-mascot {
+            position: relative !important;
+            width: 100px !important;
+            height: 100px !important;
+            min-width: 100px !important;
+            min-height: 100px !important;
+            max-width: 100px !important;
+            max-height: 100px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            animation: aj-float 3s ease-in-out infinite !important;
+        }
+        .aj-mascot img,
+        .aj-mascot-img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+            display: block !important;
+            border: 0 !important;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2)) !important;
+        }
+        .aj-badge {
+            position: absolute !important;
+            top: -5px !important;
+            left: -5px !important;
+            background: #ef4444 !important;
+            color: #fff !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            padding: 2px 6px !important;
+            border-radius: 10px !important;
+            border: 2px solid #fff !important;
+            line-height: 1 !important;
+        }
+        .aj-bubble {
+            position: absolute !important;
+            right: 10px !important;
+            bottom: 90px !important;
+            width: auto !important;
+            max-width: 260px !important;
+            white-space: nowrap !important;
+            background: rgba(255,255,255,0.95) !important;
+            color: #0f172a !important;
+            padding: 10px 16px !important;
+            border-radius: 18px 18px 4px 18px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12) !important;
+            opacity: 0 !important;
+            transform: translateY(10px) scale(0.9) !important;
+            pointer-events: none !important;
+            transition: all 0.35s ease !important;
+        }
+        .aj-bubble.active {
+            opacity: 1 !important;
+            transform: translateY(0) scale(1) !important;
+        }
+        .aj-window {
+            width: 360px !important;
+            height: 500px !important;
+            max-width: calc(100vw - 40px) !important;
+            max-height: calc(100vh - 160px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            background: rgba(255,255,255,0.92) !important;
+            border: 1px solid rgba(255,255,255,0.55) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.25) !important;
+            opacity: 0 !important;
+            transform: scale(0.8) translateY(20px) !important;
+            transform-origin: bottom right !important;
+            pointer-events: none !important;
+            transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+        }
+        .aj-window.active {
+            opacity: 1 !important;
+            transform: scale(1) translateY(0) !important;
+            pointer-events: all !important;
+        }
+        .aj-header {
+            min-height: 76px !important;
+            padding: 18px 20px !important;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: #fff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-shrink: 0 !important;
+        }
+        .aj-header-info {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+        .aj-avatar-mini {
+            width: 35px !important;
+            height: 35px !important;
+            border-radius: 50% !important;
+            background: rgba(255,255,255,0.2) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+        }
+        .aj-avatar-mini img {
+            width: 25px !important;
+            height: 25px !important;
+            object-fit: cover !important;
+            border-radius: 50% !important;
+        }
+        .aj-title-box h3 {
+            margin: 0 !important;
+            color: #fff !important;
+            font-size: 16px !important;
+            line-height: 1.2 !important;
+            font-weight: 800 !important;
+        }
+        .aj-status {
+            color: rgba(255,255,255,0.85) !important;
+            font-size: 11px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+        .aj-messages {
+            flex: 1 !important;
+            min-height: 0 !important;
+            padding: 20px !important;
+            overflow-y: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+        }
+        .aj-msg {
+            max-width: 80% !important;
+            padding: 12px 16px !important;
+            border-radius: 18px !important;
+            font-size: 13px !important;
+            line-height: 1.5 !important;
+            font-weight: 500 !important;
+        }
+        .aj-msg.bot {
+            align-self: flex-start !important;
+            background: #fff !important;
+            color: #064e3b !important;
+            border-bottom-left-radius: 4px !important;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        }
+        .aj-msg.user {
+            align-self: flex-end !important;
+            background: #10b981 !important;
+            color: #fff !important;
+            border-bottom-right-radius: 4px !important;
+        }
+        .aj-typing {
+            display: none;
+            gap: 4px !important;
+            padding: 8px 12px !important;
+            margin: 0 20px 10px !important;
+            background: rgba(255,255,255,0.65) !important;
+            border-radius: 12px !important;
+            width: fit-content !important;
+        }
+        .aj-input-area {
+            padding: 15px 20px !important;
+            background: #fff !important;
+            border-top: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            gap: 10px !important;
+            flex-shrink: 0 !important;
+        }
+        .aj-input {
+            flex: 1 !important;
+            min-width: 0 !important;
+            border: none !important;
+            outline: none !important;
+            background: transparent !important;
+            color: #064e3b !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            height: 35px !important;
+            padding: 0 !important;
+        }
+        .aj-send-btn {
+            width: 35px !important;
+            height: 35px !important;
+            min-width: 35px !important;
+            border-radius: 50% !important;
+            border: none !important;
+            background: #10b981 !important;
+            color: #fff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            padding: 0 !important;
+        }
+        .aj-chips-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            margin-top: 8px !important;
+            align-self: flex-start !important;
+            max-width: 100% !important;
+        }
+        .aj-chip {
+            background: #fff !important;
+            color: #10b981 !important;
+            border: 1px solid rgba(16,185,129,0.3) !important;
+            padding: 8px 12px !important;
+            border-radius: 16px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            font-family: 'Outfit', 'Inter', Arial, sans-serif !important;
+        }
+        @keyframes aj-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes aj-wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg); }
+            75% { transform: rotate(-10deg); }
+        }
+        .aj-mascot:hover img,
+        .aj-mascot-img-wave {
+            animation: aj-wave 0.8s ease-in-out !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 function initAjChat() {
+    ensureAjChatStyles();
+
     // Prevent double initialization
     if (window.ajChatInitialized || document.querySelector('.aj-widget')) {
         console.warn("Aj Chatbot already initialized.");

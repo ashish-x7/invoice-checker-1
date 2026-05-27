@@ -315,6 +315,14 @@ function initAmazonAudit() {
     }));
 
     // PDF Handlers (Purchase Modal)
+    const purPdfSave = document.getElementById('purPdfSaveExportBtn');
+    if (purPdfSave) purPdfSave.addEventListener('click', () => handleInvoicePdfAction(true, {
+        inputId: 'purPdfLinkInput',
+        invNoId: 'id-inv-no',
+        feedbackId: 'purPdfStatus',
+        sellerRawId: 'id-seller-code'
+    }));
+
     const purPdfExp = document.getElementById('purPdfExportBtn');
     if (purPdfExp) purPdfExp.addEventListener('click', () => handleInvoicePdfAction(false, {
         inputId: 'purPdfLinkInput',

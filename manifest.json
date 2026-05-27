@@ -31,6 +31,18 @@
     "128": "logo.png"
   },
 
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://invoice-checkern.onrender.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+
   "host_permissions": [
     "*://*.brandcentral.in/*",
     "https://script.google.com/*",

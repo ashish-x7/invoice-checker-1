@@ -1604,7 +1604,11 @@ function performVendorProcessing(j) {
     
     let tQty=0, tNet=0, tExact=0, tCgst=0, tSgst=0;
     vendorMap.clear();
-    globalVendorData = [hs, ...j.slice(2).map(r => {
+    const validRows = j.slice(2).filter(r => {
+        return r && r.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== "");
+    });
+
+    globalVendorData = [hs, ...validRows.map(r => {
         if (!r) return new Array(29).fill("");
         let s = [...r];
         while(s.length < 29) s.push("");

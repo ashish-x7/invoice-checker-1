@@ -34,9 +34,23 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
         console.log(`[DEBUG] Received Signal to start sync for: ${platform}`);
         startSyncProcess(platform);
         sendResponse({ status: `Sync logic triggered for ${platform}` });
+    } else if (request.action === 'downloadPdf') {
+        console.log("[BACKGROUND] Downloading PDF via native downloads API:", request.url, request.filename);
+        chrome.downloads.download({
+            url: request.url,
+            filename: request.filename,
+            conflictAction: "uniquify"
+        }, (downloadId) => {
+            if (chrome.runtime.lastError) {
+                console.error("[BACKGROUND] Download error:", chrome.runtime.lastError.message);
+            } else {
+                console.log("[BACKGROUND] Download started, ID:", downloadId);
+            }
+        });
+        sendResponse({ status: "Download initiated" });
     }
     return true;
-});
+  });
 
 // Alarm to ensure sync resumes if service worker sleeps
 chrome.alarms.create("syncPoll", { periodInMinutes: 1 });

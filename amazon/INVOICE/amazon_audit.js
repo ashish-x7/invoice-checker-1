@@ -111,17 +111,88 @@ async function handleInvoicePdfAction(saveToStore, config = {}) {
 
     console.log(`Final Filename Attempt: ${fileName}`);
 
-    // 1. Save to Storage
-    if (saveToStore && window.savePdfLink) {
-        await window.savePdfLink(descriptiveName, rawUrl);
+    const statusEl = document.getElementById(feedbackId);
+
+    // 0. Check if Chrome Extension is active
+    if (window.hasInvoiceCheckerExtension) {
+        console.log("[Extension Link] Initiating download via extension bridge:", fileName);
+        window.postMessage({
+            type: "DOWNLOAD_PDF_VIA_EXTENSION",
+            url: rawUrl,
+            filename: fileName
+        }, "*");
+        
+        // Save to Storage in the background
+        if (saveToStore && window.savePdfLink) {
+            window.savePdfLink(descriptiveName, rawUrl).catch(e => console.error("Save Link Error:", e));
+        }
+
+        if (statusEl) {
+            statusEl.textContent = "DONE ✅";
+            statusEl.style.opacity = '1';
+            setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+        }
+        return;
     }
 
-    // Always show "DONE ✅" feedback if the export was triggered
-    const statusEl = document.getElementById(feedbackId);
-    if (statusEl) {
-        statusEl.textContent = "DONE ✅";
-        statusEl.style.opacity = '1';
-        setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+    // Check if the URL is cross-origin
+    const isSameOrigin = rawUrl.startsWith(window.location.origin) || rawUrl.startsWith('/') || rawUrl.startsWith('./') || rawUrl.startsWith('../');
+    if (!isSameOrigin) {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+            console.log("Running on localhost. Downloading via local server proxy...");
+            const proxyUrl = `${window.location.origin}/download-pdf?url=${encodeURIComponent(rawUrl)}&filename=${encodeURIComponent(fileName)}`;
+            
+            // Create download link synchronously
+            const link = document.createElement('a');
+            link.href = proxyUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Save to Storage in the background
+            if (saveToStore && window.savePdfLink) {
+                window.savePdfLink(descriptiveName, rawUrl).catch(e => console.error("Save Link Error:", e));
+            }
+
+            if (statusEl) {
+                statusEl.textContent = "DONE ✅";
+                statusEl.style.opacity = '1';
+                setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+            }
+            return;
+        }
+
+        console.log("Cross-origin URL detected on production. Opening direct link in new tab synchronously.");
+        const win = window.open(rawUrl, '_blank');
+        
+        // Save to Storage in the background
+        if (saveToStore && window.savePdfLink) {
+            window.savePdfLink(descriptiveName, rawUrl).catch(e => console.error("Save Link Error:", e));
+        }
+
+        if (win) {
+            if (statusEl) {
+                statusEl.textContent = "OPENED 🔗";
+                statusEl.style.opacity = '1';
+                setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+            }
+        } else {
+            console.warn("Popup blocked by browser.");
+            if (statusEl) {
+                statusEl.textContent = "BLOCKED ⚠️";
+                statusEl.style.opacity = '1';
+                setTimeout(() => { statusEl.style.opacity = '0'; }, 5000);
+            }
+            window.showCustomAlert("Popup blocked! Please allow popups for this website or open the link manually.", "Popup Blocked");
+        }
+        return;
+    }
+
+    // 1. Save to Storage (for same-origin URLs)
+    if (saveToStore && window.savePdfLink) {
+        await window.savePdfLink(descriptiveName, rawUrl);
     }
 
     // 2. Reliable Download Logic (Blob Fetch + Link Rename)
@@ -147,16 +218,43 @@ async function handleInvoicePdfAction(saveToStore, config = {}) {
         }, 100);
         
         console.log("Download Success with correct name.");
+        if (statusEl) {
+            statusEl.textContent = "DONE ✅";
+            statusEl.style.opacity = '1';
+            setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+        }
     } catch (e) {
-        console.warn("Direct blob download failed, trying native extension download as fallback:", e);
+        console.warn("Direct blob download failed, fallback to direct open:", e);
         if (typeof chrome !== 'undefined' && chrome.downloads) {
             chrome.downloads.download({
                 url: rawUrl,
                 filename: fileName,
                 conflictAction: "uniquify"
             });
+            if (statusEl) {
+                statusEl.textContent = "DONE ✅";
+                statusEl.style.opacity = '1';
+                setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+            }
         } else {
-            fallbackDownloadWithProxy(rawUrl, fileName);
+            // Fallback: Open in new window immediately
+            const win = window.open(rawUrl, '_blank');
+            if (win) {
+                console.log("Direct link opened in new tab.");
+                if (statusEl) {
+                    statusEl.textContent = "OPENED 🔗";
+                    statusEl.style.opacity = '1';
+                    setTimeout(() => { statusEl.style.opacity = '0'; }, 3000);
+                }
+            } else {
+                console.warn("Popup blocked by browser.");
+                if (statusEl) {
+                    statusEl.textContent = "BLOCKED ⚠️";
+                    statusEl.style.opacity = '1';
+                    setTimeout(() => { statusEl.style.opacity = '0'; }, 5000);
+                }
+                window.showCustomAlert("Popup blocked! Please allow popups for this website or open the link manually.", "Popup Blocked");
+            }
         }
     }
 }
@@ -229,6 +327,11 @@ function exportVCDataToCSV() {
         // Excel Row 1 = Title, Row 2 = Header, Row 3+ = Data
         // In this loop: i=0 is header, i>0 is data
         if (i > 0) {
+            // Skip empty rows (where all first 17 columns are empty)
+            const hasData = row.slice(0, 17).some(cell => cell !== undefined && cell !== null && String(cell).trim() !== "");
+            if (!hasData) {
+                continue;
+            }
             row[17] = 0;
         }
 

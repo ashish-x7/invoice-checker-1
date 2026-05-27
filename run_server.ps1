@@ -23,6 +23,49 @@ try {
             $response = $context.Response
             
             $urlPath = $request.Url.LocalPath
+            
+            # PDF Download Proxy Endpoint
+            if ($urlPath -eq "/download-pdf") {
+                $query = $request.QueryString
+                $targetUrl = $query["url"]
+                $filename = $query["filename"]
+                
+                if (-not [string]::IsNullOrEmpty($targetUrl)) {
+                    Write-Host "Proxying download for: $targetUrl" -ForegroundColor Yellow
+                    try {
+                        $webClient = New-Object System.Net.WebClient
+                        $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                        $pdfBytes = $webClient.DownloadData($targetUrl)
+                        
+                        $response.StatusCode = 200
+                        $response.ContentType = "application/pdf"
+                        $response.Headers.Add("Access-Control-Allow-Origin", "*")
+                        
+                        if (-not [string]::IsNullOrEmpty($filename)) {
+                            $response.Headers.Add("Content-Disposition", "attachment; filename=`"$filename`"")
+                        } else {
+                            $response.Headers.Add("Content-Disposition", "attachment")
+                        }
+                        
+                        $response.ContentLength64 = $pdfBytes.Length
+                        $response.OutputStream.Write($pdfBytes, 0, $pdfBytes.Length)
+                        Write-Host "$(Get-Date -Format 'HH:mm:ss') - 200 OK (Proxy Download): $filename" -ForegroundColor Green
+                    } catch {
+                        Write-Host "Proxy download failed: $_" -ForegroundColor Red
+                        $response.StatusCode = 500
+                        $response.ContentType = "text/plain"
+                        $errBytes = [System.Text.Encoding]::UTF8.GetBytes("Error fetching PDF: $_")
+                        $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                    }
+                } else {
+                    $response.StatusCode = 400
+                    $response.ContentType = "text/plain"
+                    $errBytes = [System.Text.Encoding]::UTF8.GetBytes("Missing 'url' parameter")
+                    $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                }
+                $response.Close()
+                continue
+            }
             # Handle trailing slash or empty path
             if ($urlPath -eq "/" -or [string]::IsNullOrEmpty($urlPath)) {
                 $urlPath = "/index.html"

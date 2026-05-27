@@ -38,6 +38,7 @@ document.getElementById('processSaleBtn').addEventListener('click', async () => 
         const summaryRows = await readExcelFile(summaryFile);
         const summaryMap = new Map();
         for (let i = 0; i < summaryRows.length; i++) {
+            if (!summaryRows[i]) continue;
             const invId = String(summaryRows[i][2] || "").trim(); // Column C
             if (invId) summaryMap.set(invId, summaryRows[i]);
         }
@@ -70,6 +71,7 @@ document.getElementById('processSaleBtn').addEventListener('click', async () => 
         // 4. MAPPING (Start from row 3 as per VBA G3:G)
         for (let i = 2; i < detailRows.length; i++) {
             const dRow = detailRows[i];
+            if (!dRow) continue;
             const newRow = new Array(48).fill("");
 
             // Direct Mappings
@@ -312,6 +314,7 @@ function checkDuplicateInvoices(saleData, duplicateRows) {
 
         for (let i = 1; i < duplicateRows.length; i++) {
             const row = duplicateRows[i];
+            if (!row) continue;
             const invId = String(row[0] || "").trim().toUpperCase();
             const expectedCount = parseInt(row[1]) || 0;
             if (!invId) continue;

@@ -95,6 +95,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
         try {
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
+                if (!row) continue;
                 const valC = String(row[2] || "").trim();
                 
                 if (valC !== "") {
@@ -106,8 +107,9 @@ document.getElementById('processBtn').addEventListener('click', async () => {
                     const a = newRow[0], c = newRow[2], h = newRow[7], idxI = newRow[8];
                     const l = parseFloat(newRow[11]) || 0;
                     const k = parseFloat(newRow[10]) || 0;
-                    const rStr = String(newRow[17] || "").trim();
-                    const m = parseFloat(newRow[12]) || 0;
+                    const rStr = String(newRow[17] || "").trim().toUpperCase();
+                    let m = parseFloat(String(newRow[12] || "").replace("%", "")) || 0;
+                    if (m > 1) m = m / 100;
 
                     // S (18): =A2&C2&H2&I2
                     const sConcat = String(a||"") + String(c||"") + String(h||"") + String(idxI||"");
@@ -174,12 +176,12 @@ document.getElementById('processBtn').addEventListener('click', async () => {
                     // DA (104): Date + Time + Nickname
                     newRow[104] = new Date().toLocaleString('en-GB') + " - " + nickname;
 
-                    // LIMIT TO CQ (Index 94, total length 95)
-                    if (processedData[0] && processedData[0].length > 95) {
-                        processedData[0] = processedData[0].slice(0, 95);
+                    // LIMIT TO CR (Index 95, total length 96)
+                    if (processedData[0] && processedData[0].length > 96) {
+                        processedData[0] = processedData[0].slice(0, 96);
                     }
-                    if (newRow.length > 95) {
-                        newRow = newRow.slice(0, 95);
+                    if (newRow.length > 96) {
+                        newRow = newRow.slice(0, 96);
                     }
 
                     processedData.push(newRow);

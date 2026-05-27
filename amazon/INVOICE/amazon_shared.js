@@ -1500,24 +1500,27 @@ function performSaleProcessing(sJ, iJ) {
     const parseNum = (v) => parseFloat(String(v || "0").replace(/[^0-9.]/g, "")) || 0;
     
     // Find the actual summary row (usually has the invoice number and totals)
-    let sR = sJ[1]; 
-    for(let r of sJ) {
-        if (r && r[12] && !isNaN(parseNum(r[12])) && parseNum(r[12]) > 0) {
-            sR = r;
-            break;
+    let sR = (sJ && sJ.length > 1) ? sJ[1] : [];
+    if (sJ) {
+        for(let r of sJ) {
+            if (r && r[12] && !isNaN(parseNum(r[12])) && parseNum(r[12]) > 0) {
+                sR = r;
+                break;
+            }
         }
     }
+    if (!sR) sR = [];
 
     globalSaleMetadata = { 
         seller: sR[0] || "-", 
         gstin: sR[9] || "-", 
         date: sR[8] || "-", 
         invNo: sR[2] || "-", 
-        invId: (sJ[2] && sJ[2][1]) ? sJ[2][1] : "-", 
+        invId: (sJ && sJ[2] && sJ[2][1]) ? sJ[2][1] : "-", 
         qty: parseNum(sR[13]), 
         net: parseNum(sR[10]), 
         grand: parseNum(sR[12]),
-        reasonHeader: (iJ[1] && iJ[1][19]) ? String(iJ[1][19]).trim() : "",
+        reasonHeader: (iJ && iJ[1] && iJ[1][19]) ? String(iJ[1][19]).trim() : "",
         countReason: 0,
         maxDisputeFound: 0,
         hasDisputeColumn: false
@@ -1599,6 +1602,7 @@ function performVendorProcessing(j) {
     let tQty=0, tNet=0, tExact=0, tCgst=0, tSgst=0;
     vendorMap.clear();
     globalVendorData = [hs, ...j.slice(2).map(r => {
+        if (!r) return new Array(29).fill("");
         let s = [...r];
         while(s.length < 29) s.push("");
         s = s.slice(0, 29);
@@ -1655,6 +1659,7 @@ async function syncSaleToPortal() {
     // 2. Iterate Portal rows (skip header)
     for (let i = 1; i < portalDataRaw.length; i++) {
         const row = portalDataRaw[i];
+        if (!row) continue;
         
         // Get robust key using norm_key logic (symbol & case agnostic)
         const pk = norm_key(row[0]) + norm_key(row[7]) + norm_key(row[8]);

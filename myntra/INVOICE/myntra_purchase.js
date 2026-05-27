@@ -40,6 +40,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', async ()
         const summaryMap = new Map();
         for (let i = 2; i < summaryRows.length; i++) {
             const row = summaryRows[i];
+            if (!row) continue;
             const invoiceID = String(row[2] || "").trim().replace(/<br>/g, "");
             if (invoiceID) {
                 summaryMap.set(invoiceID, row);
@@ -75,6 +76,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', async ()
         // VBA starts from row 3 (i=2)
         for (let i = 2; i < detailRows.length; i++) {
             const dRow = detailRows[i];
+            if (!dRow) continue;
             const newInvoiceID = String(dRow[1] || "").trim(); // Details B
             
             if (newInvoiceID === "") continue;

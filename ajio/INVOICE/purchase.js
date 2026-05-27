@@ -49,6 +49,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', () => {
             const dict = new Map();
             for (let i = 1; i < summaryRows.length; i++) {
                 const sumRow = summaryRows[i];
+                if (!sumRow) continue;
                 const sumC = sumRow[2] !== undefined && sumRow[2] !== null ? String(sumRow[2]).trim() : "";
                 if (sumC !== "") {
                     dict.set(sumC, {
@@ -85,6 +86,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', () => {
             
             for (let i = 2; i < detailRows.length; i++) { // Start at index 2 (Row 3)
                 const dRow = detailRows[i];
+                if (!dRow) continue;
                 const colB = dRow[1] !== undefined ? String(dRow[1]).trim() : "";
                 if (colB === "") continue;
                 
@@ -256,7 +258,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', () => {
                 const invId = String(pRow[2] || "").trim();
                 const normalize = (id) => String(id || "").toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/S/g, 'P');
                 const normInv = normalize(invId);
-                let pMatch = globalPortalData.find(pr => normalize(pr[2]) === normInv);
+                let pMatch = (globalPortalData && globalPortalData.find) ? globalPortalData.find(pr => pr && normalize(pr[2]) === normInv) : null;
                 if (invId) {
                     uniqueInvoices.add(invId);
                     purchaseDataMap.set(invId, pRow);
@@ -266,6 +268,7 @@ document.getElementById('processPurchaseBtn').addEventListener('click', () => {
             // Using global portalDKMap instead of local
             if (globalPortalData && globalPortalData.length > 0) {
                 for (let p = 1; p < globalPortalData.length; p++) {
+                    if (!globalPortalData[p]) continue;
                     const dk = String(globalPortalData[p][114] || "").trim();
                     if (dk) portalDKMap.set(dk, globalPortalData[p][115]);
                 }

@@ -87,6 +87,7 @@ document.getElementById('processBtn').addEventListener('click', () => {
 
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i];
+          if (!row) continue;
           const colD = (row.length > 3 && row[3] !== undefined && row[3] !== null) ? String(row[3]).trim() : "";
 
           if (colD !== "") {
@@ -305,6 +306,7 @@ async function syncPortalWithSale() {
     if (hasSaleData) {
       for (let s = 1; s < globalSaleInvoiceData.length; s++) {
         const sRow = globalSaleInvoiceData[s];
+        if (!sRow) continue;
         // Original logic: U is 20, V is 21
         const uVal = sRow[20] !== undefined && sRow[20] !== null ? String(sRow[20]).trim() : "";
         const vVal = sRow[21] !== undefined && sRow[21] !== null ? String(sRow[21]).trim() : "";
@@ -356,6 +358,7 @@ async function syncPortalWithSale() {
     if (hasPurchaseData) {
       for (let i = 1; i < globalPurchaseData.length; i++) {
         const pr = globalPurchaseData[i];
+        if (!pr) continue;
         const billNo = normalizeBill(pr[2]);
         if (!billNo) continue;
         purchaseMapU.set(billNo, String(pr[20] || "").trim());
@@ -375,6 +378,7 @@ async function syncPortalWithSale() {
     // First pass to build the map for self-lookup
     for (let p = 1; p < globalPortalData.length; p++) {
       const r = globalPortalData[p];
+      if (!r) continue;
       const baKey = r[idxBA] !== undefined ? String(r[idxBA]).trim() : "";
       if (baKey) {
         portalMapBA_CO.set(baKey, r[idxBA + 40] || "");
@@ -383,6 +387,7 @@ async function syncPortalWithSale() {
 
     for (let p = 1; p < globalPortalData.length; p++) {
       const pRowOrig = globalPortalData[p];
+      if (!pRowOrig) continue;
       const asVal = pRowOrig[44] !== undefined && pRowOrig[44] !== null ? String(pRowOrig[44]).trim() : "";
       if (asVal !== "") portalMapAS.set(asVal, pRowOrig);
 
@@ -402,6 +407,7 @@ async function syncPortalWithSale() {
     //    Must be done BEFORE the main loop so ayVal is ready for BA-BV lookups
     for (let p = 1; p < globalPortalData.length; p++) {
       const pRow = globalPortalData[p];
+      if (!pRow) continue;
       const saleRowForAY = (hasSaleData && p < globalSaleInvoiceData.length) ? globalSaleInvoiceData[p] : null;
       pRow[50] = saleRowForAY ? (saleRowForAY[20] !== undefined ? String(saleRowForAY[20]).trim() : "") : "";
       const ayLookupPre = String(pRow[50] || "").trim().toUpperCase();
@@ -800,6 +806,7 @@ async function syncPortalWithSale() {
 
     for (let p = 1; p < globalPortalData.length; p++) {
       const pRow = globalPortalData[p];
+      if (!pRow) continue;
       const ecVal = String(pRow[132] || "").trim();
       pRow[idxBA + 42] = portalECMap_CM.get(ecVal) || ""; // CQ
       const dbKey = String(pRow[dbIdx] || "").trim();
@@ -845,6 +852,7 @@ async function syncPortalWithSale() {
     const dlIdx = 115; // Fixed index for DL
     for (let p = 1; p < globalPortalData.length; p++) {
       const pRow = globalPortalData[p];
+      if (!pRow) continue;
       const dkKey = String(pRow[dkIdx] || "").trim();
       if (dkKey !== "") {
         portalDKMap.set(dkKey, pRow[dlIdx]);

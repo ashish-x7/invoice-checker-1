@@ -110,6 +110,7 @@ function processSaleFiles(detailsBuffer, summaryBuffer, duplicateBuffer) {
   const summaryDict = {};
   for (let i = 1; i < rowsSummary.length; i++) {
     const row = rowsSummary[i];
+    if (!row) continue;
     const key = String(row[2] !== undefined ? row[2] : "").trim();
     if (key !== "") {
       summaryDict[key] = {
@@ -166,6 +167,7 @@ function processSaleFiles(detailsBuffer, summaryBuffer, duplicateBuffer) {
   const portalASSet = new Set();
   if (globalPortalData && globalPortalData.length > 0) {
     for (let i = 1; i < globalPortalData.length; i++) {
+      if (!globalPortalData[i]) continue;
       const val = globalPortalData[i][44];
       if (val !== undefined && val !== null && String(val).trim() !== "") {
         portalASSet.add(String(val).trim().toUpperCase());
@@ -392,6 +394,7 @@ function checkDuplicateInvoices(saleData, duplicateBuffer) {
 
     for (let i = 1; i < rowsDup.length; i++) {
       const row = rowsDup[i];
+      if (!row) continue;
       const invId = String(row[0] || "").trim().toUpperCase();
       const expectedCount = parseInt(row[1]) || 0;
       if (!invId) continue;
@@ -474,6 +477,7 @@ function syncSaleWithPortal() {
   if (globalPurchaseData && globalPurchaseData.length > 0) {
     for (let i = 1; i < globalPurchaseData.length; i++) {
       const pRow = globalPurchaseData[i];
+      if (!pRow) continue;
       const baKey = String(pRow[52] || "").trim();
       if (baKey !== "") {
         purchaseMap.set(baKey, pRow);
@@ -497,6 +501,7 @@ function syncSaleWithPortal() {
   // Populate SALE columns AR-AU based on AP (Index 41)
   for (let i = 1; i < globalSaleInvoiceData.length; i++) {
     const sRow = globalSaleInvoiceData[i];
+    if (!sRow) continue;
     const apKey = String(sRow[41] || "").trim();
 
     if (i <= 3) {

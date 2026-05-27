@@ -84,28 +84,44 @@
         },
         storage: {
             local: {
-                get: function(keys) {
-                    return new Promise((resolve) => {
+                get: function(keys, callback) {
+                    const promise = new Promise((resolve) => {
                         const result = {};
                         if (typeof keys === 'string') {
                             const val = localStorage.getItem(keys);
-                            result[keys] = val ? JSON.parse(val) : null;
+                            try {
+                                result[keys] = val ? JSON.parse(val) : null;
+                            } catch (e) {
+                                result[keys] = val;
+                            }
                         } else if (Array.isArray(keys)) {
                             keys.forEach(k => {
                                 const val = localStorage.getItem(k);
-                                result[k] = val ? JSON.parse(val) : null;
+                                try {
+                                    result[k] = val ? JSON.parse(val) : null;
+                                } catch (e) {
+                                    result[k] = val;
+                                }
                             });
                         } else if (keys && typeof keys === 'object') {
                             Object.keys(keys).forEach(k => {
                                 const val = localStorage.getItem(k);
-                                result[k] = val !== null ? JSON.parse(val) : keys[k];
+                                try {
+                                    result[k] = val !== null ? JSON.parse(val) : keys[k];
+                                } catch (e) {
+                                    result[k] = val;
+                                }
                             });
                         }
                         resolve(result);
                     });
+                    if (callback && typeof callback === 'function') {
+                        promise.then(callback);
+                    }
+                    return promise;
                 },
-                set: function(items) {
-                    return new Promise((resolve) => {
+                set: function(items, callback) {
+                    const promise = new Promise((resolve) => {
                         Object.keys(items).forEach(k => {
                             localStorage.setItem(k, JSON.stringify(items[k]));
                         });
@@ -113,9 +129,13 @@
                         window.dispatchEvent(new Event('storage'));
                         resolve();
                     });
+                    if (callback && typeof callback === 'function') {
+                        promise.then(callback);
+                    }
+                    return promise;
                 },
-                remove: function(keys) {
-                    return new Promise((resolve) => {
+                remove: function(keys, callback) {
+                    const promise = new Promise((resolve) => {
                         if (typeof keys === 'string') {
                             localStorage.removeItem(keys);
                         } else if (Array.isArray(keys)) {
@@ -124,13 +144,21 @@
                         window.dispatchEvent(new Event('storage'));
                         resolve();
                     });
+                    if (callback && typeof callback === 'function') {
+                        promise.then(callback);
+                    }
+                    return promise;
                 },
-                clear: function() {
-                    return new Promise((resolve) => {
+                clear: function(callback) {
+                    const promise = new Promise((resolve) => {
                         localStorage.clear();
                         window.dispatchEvent(new Event('storage'));
                         resolve();
                     });
+                    if (callback && typeof callback === 'function') {
+                        promise.then(callback);
+                    }
+                    return promise;
                 }
             }
         },

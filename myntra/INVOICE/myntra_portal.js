@@ -1,11 +1,16 @@
 // Myntra Portal Processing Logic (Converted from VBA Import_File_To_Portal)
+console.log("Myntra Portal script loaded successfully!");
 
 // Function to get nickname from storage
 async function getNickname() {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.storage && chrome.storage.local) {
         return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                resolve(localStorage.getItem('nickname') || 'User');
+            }, 150);
             chrome.storage.local.get(['nickname', 'session'], (res) => {
-                resolve(res.nickname || (res.session && res.session.nickName) || localStorage.getItem('nickname') || 'User');
+                clearTimeout(timer);
+                resolve((res && res.nickname) || (res && res.session && res.session.nickName) || localStorage.getItem('nickname') || 'User');
             });
         });
     }
@@ -13,7 +18,9 @@ async function getNickname() {
 }
 
 document.getElementById('processBtn').addEventListener('click', async () => {
+    console.log("Process Portal button clicked!");
     const fileInput = document.getElementById('excelUpload');
+    console.log("Files list:", fileInput.files);
     const portalStatus = document.getElementById('portalStatus');
     
     // 1. CLEAR DASHBOARD PRE-STATE
@@ -32,11 +39,14 @@ document.getElementById('processBtn').addEventListener('click', async () => {
     const reader = new FileReader();
 
     reader.onload = async (e) => {
+        console.log("FileReader load event triggered.");
         const nickname = await getNickname();
         const data = new Uint8Array(e.target.result);
+        console.log("Reading excel data with XLSX...");
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+        console.log("Excel parsed. Total rows found:", rows.length);
 
         if (rows.length === 0) {
             if (portalStatus) {

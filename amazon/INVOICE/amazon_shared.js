@@ -454,13 +454,16 @@ async function loadInsights() {
 
 // Function to get nickname from storage
 async function getNickname() {
-    try {
-        const result = await chrome.storage.local.get(['nickname']);
-        return result.nickname || 'User';
-    } catch (error) {
-        console.error('Error getting nickname:', error);
-        return 'User';
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.storage && chrome.storage.local) {
+        try {
+            const result = await chrome.storage.local.get(['nickname']);
+            return result.nickname || 'User';
+        } catch (error) {
+            console.error('Error getting nickname:', error);
+            return localStorage.getItem('nickname') || 'User';
+        }
     }
+    return localStorage.getItem('nickname') || 'User';
 }
 window.showPurchaseKeys = () => { console.log("--- Purchase Map Keys ---"); console.log(Array.from(purchaseMap.keys())); };
 
